@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiao.new_ryzbkDao">
+ 	<resultMap id="base" type="new_ryzbk" ></resultMap>
+     <select id="findByPid"  resultMap="base" parameterType="java.lang.String">
+		select *  from new_ryzbk where recordno=#{id}
+     </select>
+     <select id="find"  resultMap="base" parameterType="new_ryzbk">
+		select n.*,p.xm as name  from new_ryzbk n left join zc_personalrecord p on n.recordno = p.recordno  where 1=1 
+		<if test="pid!=null and pid!=''">
+		  and pid=#{pid}
+		 </if>
+     </select> 
+     <insert id="insert" parameterType="new_ryzbk">
+     	insert into new_ryzbk (pid,leixing,recordno,xm,unitid,idcard,year,contents) 
+	  values (
+	  #{pid,jdbcType=VARCHAR},
+	  #{leixing,jdbcType=VARCHAR},
+	  #{recordno,jdbcType=VARCHAR},
+	  #{xm,jdbcType=VARCHAR},
+	  #{unitid,jdbcType=VARCHAR},
+	  #{idcard,jdbcType=VARCHAR},
+	  #{year,jdbcType=VARCHAR},
+	  #{contents,jdbcType=VARCHAR}  
+	  )
+     </insert>
+     <delete id="deleteBatch" parameterType ="java.util.List">
+		delete from new_ryzbk  WHERE recordno in(
+		<foreach item="o" collection="list" open="" separator="," close="" >
+			#{o.recordno}
+		</foreach>
+		)
+	</delete>
+	
+		<update id="updatescry" >
+ 		update new_ryzbk set state=#{state}
+ 		 where recordno in (
+ 		<foreach collection="slist" item="s" open="" separator="," >
+ 		 #{s}
+ 		</foreach>
+ 		)
+ 	</update>
+</mapper>

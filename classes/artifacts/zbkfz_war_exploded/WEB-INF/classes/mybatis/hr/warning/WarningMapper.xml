@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.hr.warning.WarningDao">
+ 	<resultMap id="base" type="Warning" ></resultMap>
+ 	<select id="findByPage" resultMap="base" parameterType="Warning">
+ 		select * from hr_warning where 1=1
+ 		<if test="param.hosnum!=null and param.hosnum!=''">
+ 			and hosnum = #{param.hosnum}
+ 		</if>
+ 		<if test="param.warn_type!=null and param.warn_type!=''">
+ 			and warn_type = #{param.warn_type}
+ 		</if>
+ 		<if test="param.warn_name!=null and param.warn_name!=''">
+ 			and warn_name like '%'||#{param.warn_name}||'%'
+ 		</if>
+ 		<if test="page.order!=null">
+ 			order by ${page.order}
+ 		</if>
+ 	</select>
+ 	<select id="findById" resultMap="base">
+ 		select * from hr_warning where id = #{id}
+ 	</select>
+ 	
+ 	<select id="findByType" resultMap="base">
+ 		select warn_type from hr_warning where hosnum in (SELECT t.hosnum FROM bas_hospitals t START WITH t.hosnum = #{hosnum} CONNECT BY PRIOR t.supunit = t.hosnum)
+ 		and forward_role in ( SELECT hh.role_id  FROM BAS_USER_DEPT_ROLE_RELATION hh WHERE  hh.user_id=#{forward_role})
+ 		 group by warn_type
+ 	</select>
+ 	<insert id="insert" parameterType="Warning">
+ 		insert into hr_warning (
+			id,
+			warn_type,
+			warn_name,
+			warn_forward,
+			warn_cyc,
+			getwarn_cyc,
+			getwarn_sql,
+			forward_role,
+			warn_html,
+			hosnum,
+			operator,
+			operatdate,
+			num
+ 		) values(
+			#{id},
+			#{warn_type,jdbcType=VARCHAR},
+			#{warn_name,jdbcType=VARCHAR},
+			#{warn_forward,jdbcType=VARCHAR},
+			#{warn_cyc,jdbcType=VARCHAR},
+			#{getwarn_cyc,jdbcType=VARCHAR},
+			#{getwarn_sql,jdbcType=VARCHAR},
+			#{forward_role,jdbcType=VARCHAR},
+			#{warn_html,jdbcType=VARCHAR},
+			#{hosnum,jdbcType=VARCHAR},
+			#{operator,jdbcType=VARCHAR},
+			sysdate,
+			#{num,jdbcType=NUMERIC}
+ 		)
+ 	</insert>
+ 	
+ 	<update id="update"  parameterType="Warning">
+ 		update hr_warning set 
+			id=#{id},
+			warn_type=#{warn_type,jdbcType=VARCHAR},
+			warn_name=#{warn_name,jdbcType=VARCHAR},
+			warn_forward=#{warn_forward,jdbcType=VARCHAR},
+			warn_cyc=#{warn_cyc,jdbcType=VARCHAR},
+			getwarn_cyc=#{getwarn_cyc,jdbcType=VARCHAR},
+			getwarn_sql=#{getwarn_sql,jdbcType=VARCHAR},
+			forward_role=#{forward_role,jdbcType=VARCHAR},
+			warn_html=#{warn_html,jdbcType=VARCHAR},
+			hosnum=#{hosnum,jdbcType=VARCHAR},
+			operator=#{operator,jdbcType=VARCHAR},
+			NUM = #{num,jdbcType=NUMERIC},
+			operatdate=sysdate
+		where id = #{id}
+ 	</update>
+ 	<delete id="delete"  parameterType="Warning">
+ 		delete from hr_warning where  id = #{id}
+ 	</delete>
+    <delete id="deleteBatch" parameterType ="java.util.List">
+   		delete from hr_warning WHERE id in(
+		<foreach item="o" collection="list" open="" separator="," close="" >
+			#{o.id}
+		</foreach>
+		)
+	</delete>
+	<select id="findWarning" resultMap="base">
+	select t.*,(select count(a.forwardid) as counts  from HR_WARNING_CON a  left join HR_employee p on a.forwardid = p.p_id 
+         where a.valid='Y' and a.warn_status in ('Y','W') and 
+        p.hosnum in(select hosnum FROM bas_hospitals START WITH hosnum =#{hosnum} CONNECT BY supunit = PRIOR hosnum) and t.id=a.warn_id ) as count from hr_warning t where
+        hosnum in (SELECT t.hosnum FROM bas_hospitals t START WITH t.hosnum =#{hosnum} CONNECT BY PRIOR t.supunit = t.hosnum)
+ 		and forward_role in ( SELECT hh.role_id  FROM BAS_USER_DEPT_ROLE_RELATION hh WHERE  hh.user_id=#{forward_role})
+	</select>
+	<select id="findWarnName" resultMap="base">
+	select t.warn_name from hr_warning t where t.id in 
+	<foreach item="o" index="index" collection="warn_ids" open="(" separator="," close=")" >
+		<if test="o != null and o!='' ">
+    				'${o}'
+   		</if> 
+	</foreach>
+	</select>
+</mapper>

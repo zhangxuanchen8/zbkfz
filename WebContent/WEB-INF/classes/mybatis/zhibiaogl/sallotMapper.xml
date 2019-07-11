@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiaogl.sallotDao">
+    <resultMap id="base" type="sallot"></resultMap> 
+    <select id="findList" resultMap="base">
+    	select * from second_allot 
+    	where 1=1
+    	<if test="openmonth!=null and openmonth!=''">
+    		and date_format(allot_date,'%Y-%m')=#{openmonth}
+    	</if>
+    	<if test="ksname!=null and ksname !=''">
+    		and person like '%${ksname}%'
+    	</if>
+    </select>
+</mapper>

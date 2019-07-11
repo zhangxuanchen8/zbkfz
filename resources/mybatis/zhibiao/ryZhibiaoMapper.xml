@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiao.ryzhibiaokuDao">
+ 	<resultMap id="base" type="ryzbk" ></resultMap>
+   		 <select id="findpeoplelist" resultMap="base" parameterType="java.lang.String">
+		select * from v_ryzbk where unitid =#{id}
+   		<!--  in(select unitid from ZC_B_UNITS 
+			where psunitid =#{id}) -->
+   		 </select> 
+
+   		  <select id="findpeoplepage" resultMap="base" parameterType="zhibiao_sb">
+		select * from v_ryzbk where 1=1 
+		<if test="param.hosnum!=null and param.hosnum!=''">
+		 and unitid = #{param.hosnum}
+		</if>
+		
+   		<!--  in(select unitid from ZC_B_UNITS 
+			where psunitid =#{param.hosnum}) -->
+   		 </select> 
+   		 <select id="findpeoplename" resultMap="base" parameterType="java.lang.String">
+		select * from v_ryzbk where  recordno = #{param}
+   		 <!-- in(select unitid from ZC_B_UNITS 
+			where psunitid =#{param1}) and recordno = #{param} -->
+   		 </select> 
+   		 
+   		      
+     <select id="findzbkren"  resultMap="base" parameterType="java.lang.String">
+		select pid,recordno,xm    from v_ryzbk 
+ 		where unitid =#{hosnum} 
+ 		and recordno in(select t.recordno from zc_personalrecord t where t.guidang='Y')
+ 		<!-- and recordno in(select t.id from ZBKSCORE t where year is not null) -->
+     </select> 
+     
+     <select id="getZbscUnits" resultMap="base" parameterType="java.lang.String">
+     	select distinct unitid from v_ryzbk where recordno in (select t.id from ZBKSCORE t where year is not null)
+     	and unitid = #{unitid,jdbcType=VARCHAR}
+     	<!--  in ( select unitid from ZC_B_UNITS where psunitid = #{unitid,jdbcType=VARCHAR} ) -->
+     </select>
+     
+     <select id="getPeople_qyjg" resultMap="base" parameterType="java.lang.String">
+		select * from v_ryzbk where unitid 
+   		 in(select u.unitid from ZC_B_UNITS u
+			where u.ismyself = 1 and u.chargeunit like #{unitid,jdbcType=VARCHAR} ||'%' )
+   	</select> 
+</mapper>

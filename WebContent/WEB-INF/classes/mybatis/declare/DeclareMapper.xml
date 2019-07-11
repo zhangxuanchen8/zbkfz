@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.declare.DeclareDao">
+	<resultMap id="base" type="Declare"></resultMap>
+	<insert id="insert" parameterType="Declare">
+		insert into HR_DECLARE(
+		d_id,
+		p_id,
+		c_name,
+		p_no,
+		id_card,
+		tjhrzzg,
+		declare_state,
+		declare_result,
+		declare_date,
+		delflag,
+		deldate
+		)values(
+		#{d_id,jdbcType=VARCHAR},
+		#{p_id,jdbcType=VARCHAR},
+		#{c_name,jdbcType=VARCHAR},
+		#{p_no,jdbcType=VARCHAR},
+		#{id_card,jdbcType=VARCHAR},
+		#{tjhrzzg,jdbcType=VARCHAR},
+		#{declare_state,jdbcType=VARCHAR},
+		#{declare_result,jdbcType=DATE},
+		#{declare_date,jdbcType=DATE},
+		#{delflag,jdbcType=VARCHAR},
+		#{deldate,jdbcType=VARCHAR}
+		)
+	</insert>
+	<!-- 修改上传时间 和状态-->
+	<update id="updateDate" parameterType="Declare">
+		update HR_DECLARE d 
+		set
+		declare_date= #{declare_date,jdbcType=DATE},
+		declare_state= #{declare_state,jdbcType=VARCHAR}  
+		where 
+		d_id=#{d_id,jdbcType=VARCHAR} 
+		and extract(year from (date_format(d.declare_date,'%Y-%m-%d %h:%i:%s')))=#{year,jdbcType=VARCHAR}
+	</update>
+	<!-- 修改上传状态-->
+	<update id="updateState" parameterType="Declare">
+		update HR_DECLARE 
+		set
+		declare_state= #{declare_state,jdbcType=VARCHAR} 
+		where 
+		d_id=#{d_id,jdbcType=VARCHAR} 
+		and extract(year from (date_format(d.declare_date,'%Y-%m-%d %h:%i:%s')))=#{param.year,jdbcType=VARCHAR}
+	</update>
+	
+	<!-- 修改审核状态-->
+	<update id="updateResult" parameterType="Declare">
+		update HR_DECLARE 
+		set
+		declare_result= #{declare_result,jdbcType=VARCHAR} 
+		where 
+		d_id=#{d_id,jdbcType=VARCHAR} 
+		and extract(year from (date_format(d.declare_date,'%Y-%m-%d %h:%i:%s')))=#{param.year,jdbcType=VARCHAR}
+	</update>
+	<!-- 查询年份-->
+	<select id="getYear" resultMap="base">
+		<!-- select
+		distinct extract(year from
+		(to_date(t.declare_date,'yyyy-mm-dd hh24:mi:ss')))
+		as declare_date
+		from
+		HR_DECLARE t order by declare_date desc -->
+		
+			select distinct t.year declare_date
+  from ZC_PERSONALRECORD t where t.guidang='Y'
+ order by t.year desc
+	</select>
+<!-- 根据年份P_id用户id和年份  （或者身份证）-->
+	<select id="getByPidYear" resultMap="base" parameterType="Declare">
+		select * from HR_DECLARE d 
+		where 
+		extract(year from (date_format(d.declare_date,'%Y-%m-%d %h:%i:%s')))=#{year,jdbcType=VARCHAR}
+		<if test="p_id!=null and p_id!=''">
+			and d.p_id=#{p_id,jdbcType=VARCHAR}
+		</if>
+		<if test="id_card!=null and id_card!=''">
+			and d.id_card=#{id_card,jdbcType=VARCHAR}
+		</if>
+	</select>
+
+	<select id="findByPage" resultMap="base" parameterType="Declare">
+		select
+		extract(year from (date_format(d.declare_date,'%Y-%m-%d %h:%i:%s'))) as year,
+		d.*,
+		e.hosnum as hosnum,
+		h.hosname as hosname,
+		b.name as deptname
+		from HR_DECLARE d
+		left join hr_employee e on d.p_id=e.p_id
+		left join BAS_HOSPITALS h on h.hosnum=e.hosnum
+		left join BAS_DEPT b on b.id=e.departmentid 
+		where e.hosnum in
+		(
+		select hosnum from BAS_HOSPITALS
+		START WITH hosnum =#{param.hosnum,jdbcType=VARCHAR}
+		CONNECT BY supunit = PRIOR hosnum
+		)
+		and extract(year from (date_format(d.declare_date,'%Y-%m-%d %h:%i:%s')))=#{param.year,jdbcType=VARCHAR}
+		<if test="param.keyWord!=null and param.keyWord!=''">
+			and (d.c_name like '%' || #{param.keyWord} || '%' or d.p_no like '%' || #{param.keyWord} || '%')
+		</if>
+		order by d.declare_date desc 
+	</select>                 
+	
+	<select id="find" resultMap="base" parameterType="Declare">
+		select
+		extract(year from (date_format(d.declare_date,'%Y-%m-%d %h:%i:%s'))) as year,
+		d.*,
+		e.hosnum as hosnum,
+		h.hosname as hosname,
+		b.name as deptname
+		from HR_DECLARE d
+		left join hr_employee e on d.p_id=e.p_id
+		left join BAS_HOSPITALS h on h.hosnum=e.hosnum
+		left join BAS_DEPT b on b.id=e.departmentid 
+		where e.hosnum in
+		(
+		select hosnum from BAS_HOSPITALS
+		START WITH hosnum =#{hosnum,jdbcType=VARCHAR}
+		CONNECT BY supunit = PRIOR hosnum
+		)
+		and extract(year from (date_format(d.declare_date,'%Y-%m-%d %h:%i:%s')))=#{year,jdbcType=VARCHAR}
+	
+		<if test="declare_state!=null and declare_state!=''">
+			and d.declare_state=#{declare_state,jdbcType=VARCHAR}
+		</if>
+		order by d.declare_date desc
+	</select>
+</mapper>

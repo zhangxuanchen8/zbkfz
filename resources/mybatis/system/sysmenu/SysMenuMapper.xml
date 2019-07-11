@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.system.sysmenu.SysMenuDao">
+	<resultMap id="base" type="BaseMenu">
+	</resultMap>
+	<resultMap id="LoginLog" type="LoginLog" ></resultMap>
+    <resultMap id="ZNodes_Menu" type="com.ehinfo.hr.common.utils.tree.entity.ZNodes_Menu"></resultMap>
+
+  	<select id="system_menu_tree" resultMap="base">
+	select t.id as id,t.pid as pId,t.name as name,t.index_no,t.menu_type from bas_system_menu t order by t.index_no
+    </select> 
+
+  	<select id="searchbypage" resultMap="base" parameterType="BaseMenu">
+	  select t.* from bas_system_menu t where 1=1 
+      <if test="param.pId!=null and param.pId!=''">
+      and pid = #{param.pId}
+      </if>
+      <if test="param.name!=null and param.name!=''">
+      and t.name like #{param.name}
+      </if>
+      order by t.index_no
+    </select> 
+
+  	<select id="searchbyid" resultMap="base" parameterType="BaseMenu">
+	  select t.* from bas_system_menu t where id = #{param.id}
+    </select> 
+
+  	<select id="searchbypid" resultMap="base" parameterType="BaseMenu">
+	  select t.* from bas_system_menu t where pid = #{param.pId} order by t.id DESC
+    </select> 
+
+  	<select id="idhaveson" resultType="Integer" parameterType="BaseMenu">
+	  select count(*) from bas_system_menu t where id = #{param.id} 
+    </select> 
+  	
+  	<select id="haveson" resultType="Integer" parameterType="java.util.List">
+	  select count(*) from (
+	  	<foreach item="o" collection="list" open="" separator=" union all " close="" >
+	  		select * from bas_system_menu  where pid = #{o}
+	  	</foreach> 
+	  ) a
+    </select> 
+    
+	<delete id="delsysmenu" parameterType ="java.util.List">
+		DELETE FROM bas_system_menu WHERE id in(
+			<foreach item="o" collection="list" open="" separator="," close="" >
+				#{o}
+			</foreach>
+			)
+	</delete>
+
+	<delete id="delrolemenus" parameterType ="java.util.List">
+		DELETE FROM BAS_USER_ROLE_RIGHT WHERE menu_id in(
+			<foreach item="o" collection="list" open="" separator="," close="" >
+				#{o}
+			</foreach>
+			)
+	</delete>
+
+	<delete id="delsinglemenu" parameterType ="BaseMenu">
+		DELETE FROM bas_system_menu WHERE id = #{param.id}
+	</delete>
+	
+  	<insert id="addnew"  parameterType="BaseMenu">
+	  insert into BAS_SYSTEM_MENU (id,pid,name,url,index_no,menu_type) 
+	  values (#{param.id,jdbcType=VARCHAR},#{param.pId,jdbcType=VARCHAR},#{param.name,jdbcType=VARCHAR},#{param.url,jdbcType=VARCHAR},
+	  #{param.index_no,jdbcType=VARCHAR},#{param.menu_type,jdbcType=VARCHAR})
+    </insert> 
+
+</mapper>

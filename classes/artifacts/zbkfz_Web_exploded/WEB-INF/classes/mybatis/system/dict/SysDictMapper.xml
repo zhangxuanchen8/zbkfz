@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.system.dict.SysDictDao">
+	<!-- com.ehinfo.hr.entity.system.dict.SysDict  -->
+ 	<resultMap id="base" type="SysDict" ></resultMap>
+ 	
+ 	<select id="findScopeToTree" resultMap="base" parameterType="String">
+	select t.scope from bas_parms t where 1=1
+		and t.hosnum=#{hosnum}
+	group by t.scope
+ 	</select>
+
+	<select id="findSysDictByPage" resultMap="base" parameterType="SysDict">
+		select t.* from BAS_PARMS t where userid is null 
+		<if test="param.scope!=null and param.scope!=''">
+			and t.scope= #{param.scope}
+		</if>
+			and t.hosnum=#{param.hosnum}
+		<if test="code!=null and code!=''">
+		and t.parmname like  concat('%',#{code},'%')
+		</if>
+ 	</select>
+ 	
+ 	<select id="find"  resultMap="base" parameterType="SysDict">
+	 	select t.* from Bas_parms t where t.parmid =#{parmid}
+				and t.hosnum=#{hosnum}
+    </select>
+    <select id="findByName"  resultMap="base" parameterType="SysDict">
+	 	select t.* from Bas_parms t where t.parmname =#{parmname}
+				and t.hosnum=#{hosnum}
+			<if test="userid!=null and userid!=''">
+				and userid=#{userid}
+			</if>
+    </select>
+    
+
+	<select id="getSysnames" resultType="String" parameterType="String">
+		select t.sysname from bas_parms t where 1=1
+			and t.hosnum=#{hosnum}
+		group by t.sysname
+	</select>
+ 	
+ 	<select id="getScopes" resultType="String" parameterType="SysDict">
+	select t.name as scope from bas_system_menu t where pid='root'
+ 	</select>
+
+	<select id="checkSysDicts" resultMap="base" parameterType="SysDict">
+		select t.parmid from bas_parms t where t.parmname = #{parmname}
+		<if test="parmid!=null and parmid!=''">
+			and parmid != #{parmid}
+		</if>
+		and hosnum = #{hosnum}
+	</select>
+      
+	<update id="update" parameterType="SysDict">
+		update Bas_parms set 
+		hosnum = #{hosnum,jdbcType=VARCHAR},
+		scope = #{scope,jdbcType=VARCHAR},
+		parmname = #{parmname,jdbcType=VARCHAR},
+		parmvalue = #{parmvalue,jdbcType=VARCHAR},
+		canedit = #{canedit,jdbcType=NUMERIC},
+		comments = #{comments,jdbcType=VARCHAR},
+		descriptions = #{descriptions,jdbcType=VARCHAR},
+		sysname = #{sysname,jdbcType=VARCHAR},
+		defaultparms=#{defaultparms,jdbcType=VARCHAR},
+		userid = #{userid,jdbcType=VARCHAR}
+		where parmid = #{parmid,jdbcType=VARCHAR} 
+	</update>	
+      
+ 	<insert id="insert"  parameterType="SysDict">	
+ 	<![CDATA[
+	insert into Bas_parms(parmid,hosnum,scope,parmname,parmvalue,canedit,comments,descriptions,sysname,defaultparms,userid)
+	values(
+	    #{parmid,jdbcType=VARCHAR},
+		#{hosnum,jdbcType=VARCHAR},
+		#{scope,jdbcType=VARCHAR},
+		#{parmname,jdbcType=VARCHAR},
+		#{parmvalue,jdbcType=VARCHAR},
+		#{canedit,jdbcType=NUMERIC},
+		#{comments,jdbcType=VARCHAR},
+		#{descriptions,jdbcType=VARCHAR},
+		#{sysname,jdbcType=VARCHAR},
+		#{defaultparms,jdbcType=VARCHAR},
+		#{userid,jdbcType=VARCHAR}
+	)
+	]]>  
+	</insert>
+	
+    <delete id="delete" parameterType="SysDict">
+		delete from Bas_parms where parmid=#{parmid} and hosnum=#{hosnum}
+    </delete>
+</mapper>

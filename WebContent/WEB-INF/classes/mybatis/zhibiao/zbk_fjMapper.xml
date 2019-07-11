@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiao.zbk_fjDao">
+ 	<resultMap id="base" type="zbk_fj" ></resultMap>
+ 	<select id="findByid"  resultMap="base" parameterType="zbk_fj">
+			select t.* from ZBKfj t where hosnum=#{param.hosnum} and user_id=#{param.user_id}
+			 <if test="param.i_id!=null and param.i_id!=''">
+			 and i_id=#{param.i_id}
+			 </if>
+	</select>
+	<select id="findById"  resultMap="base" parameterType="zbk_fj">
+			select t.* from ZBKfj t where hosnum=#{hosnum} and user_id=#{user_id}
+			 and i_id=#{i_id}
+	</select>
+	<update id="update1" parameterType="zbk_fj">
+		update ZBKfj set
+			zbk_fj=#{zbk_fj}
+		where 
+			hosnum=#{hosnum}
+			and user_id=#{user_id}
+			and i_id=#{i_id}
+	</update>
+	<update id="update" parameterType="zbk_fj">
+		update ZBKfj set
+			zipingfen=#{zipingfen}
+		where 
+			hosnum=#{hosnum}
+			and user_id=#{user_id}
+			and i_id=#{i_id}
+	</update>
+	<insert id="insert1" parameterType="zbk_fj">
+		insert into ZBKfj(i_id,hosnum,user_id,zbk_fj,zipingfen,pid) values(
+ 		#{i_id,jdbcType=VARCHAR},
+		#{hosnum,jdbcType=VARCHAR},
+		#{user_id,jdbcType=VARCHAR},
+		#{zbk_fj,jdbcType=VARCHAR},
+		#{zipingfen,jdbcType=VARCHAR},
+		#{pid,jdbcType=VARCHAR}
+ 		)
+	</insert>
+	    <select id="findPid"  resultMap="base" parameterType="java.lang.String">
+     	select t.*,z.pid as name from ZBKfj t left join zbk z on z.i_id =t.i_id where user_id=#{id}
+     	 and t.i_id in (select k.i_id from zbk k where k.use_dept = #{dept})
+     	 ORDER BY t.i_id
+     </select>
+        <select id="findmaxscore"  resultMap="base" parameterType="java.lang.String">
+     	select  max(t.zipingfen) as zipingfen,t.pid from ZBKfj t left join zbk z on z.i_id = t.pid 
+where t.user_id=#{id} and z.is_max='1' 
+and t.i_id in (select k.i_id from zbk k where k.use_dept = #{dept})
+group by t.pid 
+     	
+     </select>
+</mapper>

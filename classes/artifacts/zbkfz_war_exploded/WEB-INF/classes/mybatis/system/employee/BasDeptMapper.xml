@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.system.employee.BasDeptDao">
+  <resultMap id="base" type="BasDept"></resultMap>
+  
+  <!-- 查询科室的树 -->
+  <select id="getDeptTreeJsonPage" resultMap="base" parameterType="BasDept">
+     select d.*,h.hosname from bas_dept d
+     left join bas_hospitals h
+     on d.hosnum = h.hosnum
+     where d.hosnum = #{param.hosnum}
+  </select>
+  
+  <!-- 查询科室的树 -->
+  <select id="getDeptTreeJson" resultMap="base" parameterType="BasDept">
+    select * from bas_dept d where d.hosnum = #{hosnum}
+  </select>
+   <select id="findById" resultMap="base" parameterType="BasDept">
+   	select * from bas_dept where id=#{id}
+   </select>
+</mapper>

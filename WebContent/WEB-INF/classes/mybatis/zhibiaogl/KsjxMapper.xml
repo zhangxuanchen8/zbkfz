@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiaogl.ksjxDao">
+    <resultMap id="base" type="ksjx"></resultMap> 
+    <select id="findList" resultMap="base">
+    	select a.id,a.ksdate,b.name as deptname,a.income,a.expenditure,a.depreciation,a.surplus,a.ticketnum,a.clinic,
+    	a.technology,a.jx_num,a.ks_num,a.base_jx,a.zy_jx,a.ought_jx,a.reward,a.reality_jx,a.person_num,
+    	a.average_jx,issue_date
+    	from ksjx a left join bas_dept b
+    	on a.deptid=b.id
+    	where 1=1
+    	<if test="openmonth!=null and openmonth!=''">
+    		and date_format(ksdate,'%Y-%m')=#{openmonth}
+    	</if>
+    	<if test="ksname!=null and ksname !=''">
+    		and deptname like '%${ksname}%'
+    	</if>
+    </select>
+</mapper>

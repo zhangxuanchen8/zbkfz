@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiaogl.zhibiaokhDao">
+    <resultMap id="base" type="zhibiaokh"></resultMap> 
+    <resultMap id="ZNodes" type="com.ehinfo.hr.common.utils.tree.entity.ZNodes"></resultMap>
+    <select id="findByPage" resultMap="base" parameterType="zhibiaokh">
+    	select * from zhibiaokh where hosnum=#{param.hosnum}
+    </select>
+   	<select id="findById" resultMap="base" parameterType="zhibiaokh">
+   		select * from zhibiaokh where id=#{id}
+   	</select>
+   	<insert id="insert" parameterType="zhibiaokh">
+   		insert into zhibiaokh(id,khname,hosnum,kstype,gongshi,deptid)
+   		values(
+   		#{id,jdbcType=VARCHAR},
+   		#{khname,jdbcType=VARCHAR},
+   		#{hosnum,jdbcType=VARCHAR},
+   		#{kstype,jdbcType=VARCHAR},
+   		#{gongshi,jdbcType=VARCHAR},
+   		#{deptid,jdbcType=VARCHAR}
+   		)
+   	</insert>
+   	<update id="update" parameterType="zhibiaokh">
+   	update zhibiaokh set
+   		khname=#{khname,jdbcType=VARCHAR},
+   		kstype=#{kstype,jdbcType=VARCHAR},
+   		gongshi=#{gongshi,jdbcType=VARCHAR},
+   		deptid=#{deptid,jdbcType=VARCHAR}
+   	where id=#{id}
+   	</update>
+   	<delete id="deleteBatch" parameterType="java.util.List">
+   		delete from zhibiaokh where id in(
+   		<foreach item="o" collection="list" open="" separator="," close="" >
+   		#{o.id}
+   		</foreach>
+   		)
+   	</delete>
+<!--   判断科室是否已经在配置方案中有配置，如果配置了的话就不能进行配置了，按道理来讲是可以使用regexp_like方法，但是。。。。。。。。。那个方法见鬼去吧，劳资不会 -->
+   	<select id="isDeptCompute" resultMap="base" parameterType="String">
+   		select * from zhibiaokh where 1=1
+   		<if test="id!=null and id!=''">
+   		and id!=#{id}  
+   		</if>
+   		and 
+   		(deptid=#{deptid} or
+   		deptid like '${deptid},%' or
+   		deptid like '%,${deptid},%' or
+   		deptid like '%,${deptid}')
+   	</select>
+   	<select id="findDeptname" resultType="String" parameterType="String">
+		select name from bas_dept where id=#{deptid}   	
+   	</select>
+</mapper>

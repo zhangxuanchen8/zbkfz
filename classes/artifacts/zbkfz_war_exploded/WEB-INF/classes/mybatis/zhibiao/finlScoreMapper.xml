@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiao.finlScoreDao">
+ 	<resultMap id="base" type="finlScore" ></resultMap>
+	<insert id="insert">
+		insert into finlscore (id,nameid,hosnum,xulieid,itemid,year,finlscore,dept,zipingfen) 
+	  values (
+	   #{id,jdbcType=VARCHAR},
+	   #{nameid,jdbcType=VARCHAR},
+	   #{hosnum,jdbcType=VARCHAR},
+	   #{xulieid,jdbcType=VARCHAR},
+	   #{itemid,jdbcType=VARCHAR},
+	   #{year,jdbcType=VARCHAR},
+	   #{finlscore,jdbcType=VARCHAR},
+	   #{dept,jdbcType=VARCHAR},
+	   #{zipingfen,jdbcType=VARCHAR}
+	  )
+	</insert>
+	
+	<update id="update" parameterType="finlScore">
+		UPDATE finlscore 
+		SET finlscore=#{finlscore,jdbcType=VARCHAR},zipingfen=#{zipingfen,jdbcType=VARCHAR}
+		WHERE 
+			id=#{id,jdbcType=VARCHAR}
+			and
+			hosnum=#{hosnum,jdbcType=VARCHAR}
+			and
+			xulieid=#{xulieid,jdbcType=VARCHAR}
+	
+	</update>
+	<update id="updatestatu" parameterType="finlScore">
+		UPDATE finlscore 
+		SET statu='Y'
+		WHERE 
+			id=#{id,jdbcType=VARCHAR}
+			and
+			dept=#{dept,jdbcType=VARCHAR}
+	</update>
+	<select id="getValidByPid" resultMap="base" parameterType="finlScore">
+		select * from finlscore where id = #{id}  and hosnum=#{hosnum} and dept = #{dept} and statu='Y'
+	</select>
+	<select id="findById" resultMap="base" parameterType="finlScore">
+		select * from finlscore where id = #{id} and xulieid=#{xulieid} and hosnum=#{hosnum} 
+	</select>
+		<select id="find" resultMap="base" >
+			select e.*, sum(e.finlscore) as num from FINLSCORE e where e.id=#{id} and e.statu='Y'
+	</select>
+	<select id="findByPid" resultMap="base" parameterType="java.lang.String">
+	select t.finlscore as num,t.* from finlscore t where t.id =#{id}
+	<if test="dept!=null and dept!=''">
+    		 and  t.dept=#{dept}
+      </if>
+      <!-- <if test="dept==null or dept==''">
+    		 and  t.statu='Y'
+      </if> -->
+	</select>
+</mapper>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiao.ZbkavgscoreDao">
+ 	<resultMap id="base" type="Zbkavgscore" ></resultMap>
+ 	
+ 	 <select id="findByPage" resultMap="base" parameterType="Zbkavgscore">
+        select t.*,z.item
+          from avgscore t left join zbk z on z.i_id = t.itemid
+         where t.itemid=#{param.itemid}
+ 		<if test="param.hosnum!=null and param.hosnum!=''">
+ 			 and t.hosnum=#{param.hosnum}
+ 		</if>
+ 	</select>
+ 	<select id="findById"  resultMap="base" parameterType="Zbkavgscore">
+			select t.* from avgscore t where 1=1 and t.id = #{id}
+			
+		</select>
+	<insert id="insert" parameterType="Zbkavgscore">
+		insert into avgscore (id,itemid,hosnum,itemscore,number,zbkname,avgscore,tiemname,nameid,zbkid) 
+	  values (
+	  #{id,jdbcType=VARCHAR},
+	   #{itemid,jdbcType=VARCHAR},
+	   #{hosnum,jdbcType=VARCHAR},
+	   #{itemscore,jdbcType=VARCHAR},
+	   #{number,jdbcType=VARCHAR},
+	   #{zbkname,jdbcType=VARCHAR},
+	   #{avgscore,jdbcType=VARCHAR},
+	   sysdate(),
+	   #{nameid,jdbcType=VARCHAR},
+	    #{zbkid,jdbcType=VARCHAR}
+	  )
+	</insert>
+	<delete id="deletelist" parameterType ="java.util.List">
+   			DELETE FROM avgscore WHERE id in(
+			<foreach item="o" collection="list" open="" separator="," close="" >
+				#{o}
+			</foreach>
+			)
+   		</delete>
+	<!-- <update id="update" parameterType="Choose_Dept">
+		UPDATE choose_dept 
+		SET z_name=#{z_name,jdbcType=VARCHAR},
+		    g_dept=#{g_dept,jdbcType=VARCHAR},
+		    remark=#{remark,jdbcType=VARCHAR},
+		    index_no=#{index_no,jdbcType=VARCHAR},
+		    create_time=sysdate()
+		WHERE 
+			key_id=#{key_id,jdbcType=VARCHAR}
+	</update>
+	
+	<delete id="deleteDept" parameterType="Choose_Dept">
+	   delete from choose_dept where key_id = #{key_id}
+	</delete> -->
+	
+</mapper>

@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.achieve.AchieveDao">
+	<resultMap id="fenpeiks" type="fenpeiks"></resultMap>
+	<resultMap id="base" type="Achieve" ></resultMap>
+	<select id="findth" resultType="java.util.HashMap" parameterType="String">
+    	select * from zhibiaoku where hosnum=#{hosnum} and isuse = 'Y' and isshow = 'Y' and id in (select id from option_name where OPTION_NAME = '绩效' ) order by ZBKINDEX
+    </select>
+
+    <select id="findth_model" resultType="java.util.HashMap" parameterType="String">
+    	select * from zhibiaoku where hosnum=#{hosnum} and isuse = 'Y' and isshow = 'Y' and zbksource = '数据导入' and id in (select id from option_name where OPTION_NAME = '绩效' ) order by ZBKINDEX
+    </select>
+
+    <select id="findth_all" resultType="java.util.HashMap" parameterType="String">
+    	select * from zhibiaoku where hosnum=#{hosnum} and isuse = 'Y'   order by ZBKINDEX
+    </select>
+
+	<select id="findth_first" resultType="java.util.HashMap" parameterType="String">
+    	select * from zhibiaoku where hosnum=#{hosnum} and isuse = 'Y'  and  and id in (select id from option_name where OPTION_NAME = '绩效' ) order by ZBKINDEX
+    </select>
+
+	<select id="doornot" resultType="java.util.HashMap" parameterType="String">
+    	select * from FENPEI_KS_MONTH where hosnum = #{hosnum} and (date_format(tjrqs,'%Y-%m-%d %h:%i') &lt;= #{startdate} and date_format(tjrqe,'%Y-%m-%d %h:%i') &gt;= #{enddate}) and xfrq is not null order by deptid
+</select>
+
+	<select id="doornot2" resultType="java.util.HashMap" parameterType="String">
+    	select * from FENPEI_KS_MONTH where hosnum = #{hosnum} and (date_format(tjrqs,'%Y-%m-%d %h:%i') &lt;= #{startdate} and date_format(tjrqe,'%Y-%m-%d %h:%i') &gt;= #{enddate})  order by deptid
+    </select>
+
+	<select id="lasttjrqe" resultType="String" parameterType="String">
+    	select distinct max(date_format(tjrqs,'%Y-%m-%d'))||'~'||max(date_format(tjrqe,'%Y-%m-%d')) from FENPEI_KS_MONTH where hosnum = #{hosnum}
+    </select>
+
+	<select id="getsjd" resultType="String" parameterType="String">
+    	select date_format(t.tjrqs,'%Y-%m-%d %h:%i:%s')||' ~ '||date_format(t.tjrqe,'%Y-%m-%d %h:%i:%s') from fenpei_ks_month t where hosnum=#{hosnum} group by t.tjrqs,t.tjrqe order by t.tjrqe desc
+    </select>
+
+	<select id="getxfrq" resultMap="base" parameterType="String">
+		select id,hosnum,xfrq from FENPEI_KS_MONTH t where (select ziduan from zhibiaoku where zbkname=#{option}) !='0.00'
+		<if test="sdate != '' ">
+			AND date_format(t.tjrqs,'%Y-%m-%d %h:%i:%s')=#{sdate}
+		</if>
+		<if test="edate != '' ">
+			AND date_format(t.tjrqs,'%Y-%m-%d %h:%i:%s')=#{edate}
+		</if>
+	</select>
+	
+	<delete id="delete" parameterType="java.lang.String">
+		delete from FENPEI_KS_MONTH where id=#{id}
+	</delete>
+	
+	<select id="getsfupd" resultType="String" parameterType="String">
+    	select id from FENPEI_KS where jxrq=date_format(#{time},'%Y/%m/%d')
+	</select>
+	<!--<select id="findtd" resultType="java.util.HashMap" parameterType="String">
+    	select deptname,DEPTID,
+    	 sum(OPTION1),
+    	 sum(OPTION2),
+    	 sum(OPTION3),
+    	 sum(OPTION4),
+    	 sum(OPTION5),
+    	 sum(OPTION6),
+    	 sum(OPTION7),
+    	 sum(OPTION8),
+    	 sum(OPTION9),
+    	 sum(OPTION10),
+    	 sum(OPTION11),
+    	 sum(OPTION12),
+    	 sum(OPTION13),
+    	 sum(OPTION14),
+    	 sum(OPTION15),
+    	 sum(OPTION16),
+    	 sum(OPTION17),
+    	 sum(OPTION18),
+    	 sum(OPTION19),
+    	 sum(OPTION20),
+    	 sum(OPTION21),
+    	 sum(OPTION22),
+    	 sum(OPTION23),
+    	 sum(OPTION24),
+    	 sum(OPTION25),
+    	 sum(OPTION26),
+    	 sum(OPTION27),
+    	 sum(OPTION28),
+    	 sum(OPTION29),
+    	 sum(OPTION30),
+    	 from fenpei_ks t where hosnum=#{hosnum} and date_format(t.jxrq,'%Y-%m') between date_format(add_months(sysdate,-1),'%Y-%m')
+    	 group by DEPTNAME,DEPTID
+    </select>-->
+
+	<select id="findtd" resultType="java.util.HashMap" parameterType="String">
+    	select *
+		 FROM fenpei_ks_month t
+		 WHERE hosnum=#{hosnum}
+		 and t.tjrqe = (select max(tjrqe)  from  fenpei_ks_month)  order by deptid
+
+    </select>
+
+	<select id="findjx_gongshi" resultType="java.util.HashMap" parameterType="String">
+    	select * from ZHIBIAOKH t where  hosnum = #{hosnum}
+    </select>
+
+	<select id="find_sql" resultType="Double" parameterType="String">
+    	${sql}
+    </select>
+
+	<select id="find_sqllist" resultType="java.util.HashMap" parameterType="String">
+    	${sql}
+    </select>
+	
+	<insert id="insert" parameterType="Achieve">
+		insert into fenpei_ks_month (
+ 			id,hosnum,deptid,deptname,rs,jxrqc
+ 		)
+ 		values(
+			#{id,jdbcType=VARCHAR},
+			#{hosnum,jdbcType=VARCHAR},
+			#{deptid,jdbcType=VARCHAR},
+			#{deptname,jdbcType=VARCHAR},
+			#{rs,jdbcType=VARCHAR},
+			add_months(#{jxrq,jdbcType=DATE},-1)
+ 		)
+	</insert>
+	
+	<insert id="insertday" parameterType="String">
+		${sql}
+	</insert>
+
+	<insert id="insert_sql" parameterType="String">
+		${sql}
+	</insert>
+	
+	<update id="update"  parameterType="Achieve">
+		update fenpei_ks 
+		set option1=#{option1,jdbcType=VARCHAR},
+			option2=#{option2,jdbcType=VARCHAR},
+			option3=#{option3,jdbcType=VARCHAR},
+			option4=#{option4,jdbcType=VARCHAR},
+			option5=#{option5,jdbcType=VARCHAR},
+			option6=#{option6,jdbcType=VARCHAR},
+			option7=#{option7,jdbcType=VARCHAR},
+			option8=#{option8,jdbcType=VARCHAR},
+			option9=#{option9,jdbcType=VARCHAR},
+			option10=#{option10,jdbcType=VARCHAR},
+			option11=#{option11,jdbcType=VARCHAR},
+			option12=#{option12,jdbcType=VARCHAR},
+			option13=#{option13,jdbcType=VARCHAR},
+			option14=#{option14,jdbcType=VARCHAR},
+			option15=#{option15,jdbcType=VARCHAR},
+			option16=#{option16,jdbcType=VARCHAR},
+			option17=#{option17,jdbcType=VARCHAR},
+			option18=#{option18,jdbcType=VARCHAR},
+			option19=#{option19,jdbcType=VARCHAR},
+			option20=#{option20,jdbcType=VARCHAR},
+			option21=#{option21,jdbcType=VARCHAR},
+			option22=#{option22,jdbcType=VARCHAR},
+			option23=#{option23,jdbcType=VARCHAR},
+			option24=#{option24,jdbcType=VARCHAR},
+			option25=#{option25,jdbcType=VARCHAR},
+			option26=#{option26,jdbcType=VARCHAR},
+			option27=#{option27,jdbcType=VARCHAR},
+			option28=#{option28,jdbcType=VARCHAR},
+			option29=#{option29,jdbcType=VARCHAR},
+			option30=#{option30,jdbcType=VARCHAR}
+		WHERE 
+			id=#{id,jdbcType=VARCHAR}
+	</update>
+	<update id="update_sql"  parameterType="String">
+    	${sql}
+    </update>
+
+	<update id="chushihua"  parameterType="String">
+    	update fenpei_ks_month a set
+    	option1 = (select sum(option1) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option2 = (select sum(option2) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option3 = (select sum(option3) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option4 = (select sum(option4) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option5 = (select sum(option5) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option6 = (select sum(option6) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option7 = (select sum(option7) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option8 = (select sum(option8) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option9 = (select sum(option9) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option10 = (select sum(option10) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option11 = (select sum(option11) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option12 = (select sum(option12) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option13 = (select sum(option13) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option14 = (select sum(option14) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option15= (select sum(option15) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option16 = (select sum(option16) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option17 = (select sum(option17) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option18 = (select sum(option18) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option19 = (select sum(option19) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option20 = (select sum(option20) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option21 = (select sum(option21) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option22 = (select sum(option22) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option23 = (select sum(option23) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option24 = (select sum(option24) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option25 = (select sum(option25) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option26 = (select sum(option26) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option27 = (select sum(option27) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option28 = (select sum(option28) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option29 = (select sum(option29) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option30 = (select sum(option30) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option31 = (select sum(	option31) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option32 = (select sum(	option32) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option33 = (select sum(	option33) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option34 = (select sum(	option34) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option35 = (select sum(	option35) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option36 = (select sum(	option36) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option37 = (select sum(	option37) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option38 = (select sum(	option38) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option39 = (select sum(	option39) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option40 = (select sum(	option40) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option41 = (select sum(	option41) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option42 = (select sum(	option42) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option43 = (select sum(	option43) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option44 = (select sum(	option44) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option45 = (select sum(	option45) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option46 = (select sum(	option46) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option47 = (select sum(	option47) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option48 = (select sum(	option48) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option49 = (select sum(	option49) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option50 = (select sum(	option50) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option51 = (select sum(	option51) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option52 = (select sum(	option52) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option53 = (select sum(	option53) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option54 = (select sum(	option54) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option55 = (select sum(	option55) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option56 = (select sum(	option56) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option57 = (select sum(	option57) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option58 = (select sum(	option58) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option59 = (select sum(	option59) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option60 = (select sum(	option60) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option61 = (select sum(	option61) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option62 = (select sum(	option62) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option63 = (select sum(	option63) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option64 = (select sum(	option64) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option65 = (select sum(	option65) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option66 = (select sum(	option66) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option67 = (select sum(	option67) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option68 = (select sum(	option68) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option69 = (select sum(	option69) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option70 = (select sum(	option70) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option71 = (select sum(	option71) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option72 = (select sum(	option72) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option73 = (select sum(	option73) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option74 = (select sum(	option74) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option75 = (select sum(	option75) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option76 = (select sum(	option76) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option77 = (select sum(	option77) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option78 = (select sum(	option78) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option79 = (select sum(	option79) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option80 = (select sum(	option80) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option81 = (select sum(	option81) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option82 = (select sum(	option82) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option83 = (select sum(	option83) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option84 = (select sum(	option84) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option85 = (select sum(	option85) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option86 = (select sum(	option86) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option87 = (select sum(	option87) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option88 = (select sum(	option88) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option89 = (select sum(	option89) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option90 = (select sum(	option90) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option91 = (select sum(	option91) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option92 = (select sum(	option92) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option93 = (select sum(	option93) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option94 = (select sum(	option94) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option95 = (select sum(	option95) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option96 = (select sum(	option96) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option97 = (select sum(	option97) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option98 = (select sum(	option98) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		option99 = (select sum(	option99) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate} ),
+		rs = (select IFNULL(sum(b.rs)/2,0) from fenpei_ks b where b.deptid = a.deptid and date_format(b.jxrq,'%Y-%m-%d')||' 12:00' =  #{enddate} ) ,
+		TJRQS = date_format(#{startdate},'%Y-%m-%d %h:%i'),
+		tjrqe = date_format(#{enddate},'%Y-%m-%d %h:%i')
+		where
+		date_format(tjrqe,'%Y-%m-%d %h:%i') = #{enddate}
+
+    </update>
+
+	<select id="daytomonth" resultType="java.util.HashMap" parameterType="String" >
+			select
+		#{hosnum} hosnum,
+		#{deptid_jx} deptid,
+		#{deptname} deptname,
+		 IFNULL(sum(IFNULL(OPTION1,0)),0) OPTION1,
+		 IFNULL(sum(IFNULL(OPTION2,0)),0) OPTION2,
+		 IFNULL(sum(IFNULL(OPTION3,0)),0) OPTION3,
+		 IFNULL(sum(IFNULL(OPTION4,0)),0) OPTION4,
+		 IFNULL(sum(IFNULL(OPTION5,0)),0) OPTION5,
+		 IFNULL(sum(IFNULL(OPTION6,0)),0) OPTION6,
+		 IFNULL(sum(IFNULL(OPTION7,0)),0) OPTION7,
+		 IFNULL(sum(IFNULL(OPTION8,0)),0) OPTION8,
+		 IFNULL(sum(IFNULL(OPTION9,0)),0) OPTION9,
+		 IFNULL(sum(IFNULL(OPTION10,0)),0) OPTION10,
+		 IFNULL(sum(IFNULL(OPTION11,0)),0) OPTION11,
+		 IFNULL(sum(IFNULL(OPTION12,0)),0) OPTION12,
+		 IFNULL(sum(IFNULL(OPTION13,0)),0) OPTION13,
+		 IFNULL(sum(IFNULL(OPTION14,0)),0) OPTION14,
+		 IFNULL(sum(IFNULL(OPTION15,0)),0) OPTION15,
+		 IFNULL(sum(IFNULL(OPTION16,0)),0) OPTION16,
+		 IFNULL(sum(IFNULL(OPTION17,0)),0) OPTION17,
+		 IFNULL(sum(IFNULL(OPTION18,0)),0) OPTION18,
+		 IFNULL(sum(IFNULL(OPTION19,0)),0) OPTION19,
+		 IFNULL(sum(IFNULL(OPTION20,0)),0) OPTION20,
+		 IFNULL(sum(IFNULL(OPTION21,0)),0) OPTION21,
+		 IFNULL(sum(IFNULL(OPTION22,0)),0) OPTION22,
+		 IFNULL(sum(IFNULL(OPTION23,0)),0) OPTION23,
+		 IFNULL(sum(IFNULL(OPTION24,0)),0) OPTION24,
+		 IFNULL(sum(IFNULL(OPTION25,0)),0) OPTION25,
+		 IFNULL(sum(IFNULL(OPTION26,0)),0) OPTION26,
+		 IFNULL(sum(IFNULL(OPTION27,0)),0) OPTION27,
+		 IFNULL(sum(IFNULL(OPTION28,0)),0) OPTION28,
+		 IFNULL(sum(IFNULL(OPTION29,0)),0) OPTION29,
+		 IFNULL(sum(IFNULL(OPTION30,0)),0) OPTION30,
+		IFNULL(sum(IFNULL(OPTION31,0)),0)	OPTION31,
+		IFNULL(sum(IFNULL(OPTION32,0)),0)	OPTION32,
+		IFNULL(sum(IFNULL(OPTION33,0)),0)	OPTION33,
+		IFNULL(sum(IFNULL(OPTION34,0)),0)	OPTION34,
+		IFNULL(sum(IFNULL(OPTION35,0)),0)	OPTION35,
+		IFNULL(sum(IFNULL(OPTION36,0)),0)	OPTION36,
+		IFNULL(sum(IFNULL(OPTION37,0)),0)	OPTION37,
+		IFNULL(sum(IFNULL(OPTION38,0)),0)	OPTION38,
+		IFNULL(sum(IFNULL(OPTION39,0)),0)	OPTION39,
+		IFNULL(sum(IFNULL(OPTION40,0)),0)	OPTION40,
+		IFNULL(sum(IFNULL(OPTION41,0)),0)	OPTION41,
+		IFNULL(sum(IFNULL(OPTION42,0)),0)	OPTION42,
+		IFNULL(sum(IFNULL(OPTION43,0)),0)	OPTION43,
+		IFNULL(sum(IFNULL(OPTION44,0)),0)	OPTION44,
+		IFNULL(sum(IFNULL(OPTION45,0)),0)	OPTION45,
+		IFNULL(sum(IFNULL(OPTION46,0)),0)	OPTION46,
+		IFNULL(sum(IFNULL(OPTION47,0)),0)	OPTION47,
+		IFNULL(sum(IFNULL(OPTION48,0)),0)	OPTION48,
+		IFNULL(sum(IFNULL(OPTION49,0)),0)	OPTION49,
+		IFNULL(sum(IFNULL(OPTION50,0)),0)	OPTION50,
+		IFNULL(sum(IFNULL(OPTION51,0)),0)	OPTION51,
+		IFNULL(sum(IFNULL(OPTION52,0)),0)	OPTION52,
+		IFNULL(sum(IFNULL(OPTION53,0)),0)	OPTION53,
+		IFNULL(sum(IFNULL(OPTION54,0)),0)	OPTION54,
+		IFNULL(sum(IFNULL(OPTION55,0)),0)	OPTION55,
+		IFNULL(sum(IFNULL(OPTION56,0)),0)	OPTION56,
+		IFNULL(sum(IFNULL(OPTION57,0)),0)	OPTION57,
+		IFNULL(sum(IFNULL(OPTION58,0)),0)	OPTION58,
+		IFNULL(sum(IFNULL(OPTION59,0)),0)	OPTION59,
+		IFNULL(sum(IFNULL(OPTION60,0)),0)	OPTION60,
+		IFNULL(sum(IFNULL(OPTION61,0)),0)	OPTION61,
+		IFNULL(sum(IFNULL(OPTION62,0)),0)	OPTION62,
+		IFNULL(sum(IFNULL(OPTION63,0)),0)	OPTION63,
+		IFNULL(sum(IFNULL(OPTION64,0)),0)	OPTION64,
+		IFNULL(sum(IFNULL(OPTION65,0)),0)	OPTION65,
+		IFNULL(sum(IFNULL(OPTION66,0)),0)	OPTION66,
+		IFNULL(sum(IFNULL(OPTION67,0)),0)	OPTION67,
+		IFNULL(sum(IFNULL(OPTION68,0)),0)	OPTION68,
+		IFNULL(sum(IFNULL(OPTION69,0)),0)	OPTION69,
+		IFNULL(sum(IFNULL(OPTION70,0)),0)	OPTION70,
+		IFNULL(sum(IFNULL(OPTION71,0)),0)	OPTION71,
+		IFNULL(sum(IFNULL(OPTION72,0)),0)	OPTION72,
+		IFNULL(sum(IFNULL(OPTION73,0)),0)	OPTION73,
+		IFNULL(sum(IFNULL(OPTION74,0)),0)	OPTION74,
+		IFNULL(sum(IFNULL(OPTION75,0)),0)	OPTION75,
+		IFNULL(sum(IFNULL(OPTION76,0)),0)	OPTION76,
+		IFNULL(sum(IFNULL(OPTION77,0)),0)	OPTION77,
+		IFNULL(sum(IFNULL(OPTION78,0)),0)	OPTION78,
+		IFNULL(sum(IFNULL(OPTION79,0)),0)	OPTION79,
+		IFNULL(sum(IFNULL(OPTION80,0)),0)	OPTION80,
+		IFNULL(sum(IFNULL(OPTION81,0)),0)	OPTION81,
+		IFNULL(sum(IFNULL(OPTION82,0)),0)	OPTION82,
+		IFNULL(sum(IFNULL(OPTION83,0)),0)	OPTION83,
+		IFNULL(sum(IFNULL(OPTION84,0)),0)	OPTION84,
+		IFNULL(sum(IFNULL(OPTION85,0)),0)	OPTION85,
+		IFNULL(sum(IFNULL(OPTION86,0)),0)	OPTION86,
+		IFNULL(sum(IFNULL(OPTION87,0)),0)	OPTION87,
+		IFNULL(sum(IFNULL(OPTION88,0)),0)	OPTION88,
+		IFNULL(sum(IFNULL(OPTION89,0)),0)	OPTION89,
+		IFNULL(sum(IFNULL(OPTION90,0)),0)	OPTION90,
+		IFNULL(sum(IFNULL(OPTION91,0)),0)	OPTION91,
+		IFNULL(sum(IFNULL(OPTION92,0)),0)	OPTION92,
+		IFNULL(sum(IFNULL(OPTION93,0)),0)	OPTION93,
+		IFNULL(sum(IFNULL(OPTION94,0)),0)	OPTION94,
+		IFNULL(sum(IFNULL(OPTION95,0)),0)	OPTION95,
+		IFNULL(sum(IFNULL(OPTION96,0)),0)	OPTION96,
+		IFNULL(sum(IFNULL(OPTION97,0)),0)	OPTION97,
+		IFNULL(sum(IFNULL(OPTION98,0)),0)	OPTION98,
+		IFNULL(sum(IFNULL(OPTION99,0)),0)	OPTION99,
+		0 rs,
+		 #{startdate} TJRQS,
+		 #{enddate} TJRQE
+		from
+			fenpei_ks t
+			where date_format(t.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate}
+			and t.DEPTID in (${deptid})
+
+	
+<!-- 		select
+		#{hosnum} hosnum,
+		#{deptid_jx} deptid,
+		#{deptname} deptname,
+		 nvl(sum(nvl(OPTION1,0)),0) OPTION1,
+		 nvl(sum(nvl(OPTION2,0)),0) OPTION2,
+		 nvl(sum(nvl(OPTION3,0)),0) OPTION3,
+		 nvl(sum(nvl(OPTION4,0)),0) OPTION4,
+		 nvl(sum(nvl(OPTION5,0)),0) OPTION5,
+		 nvl(sum(nvl(OPTION6,0)),0) OPTION6,
+		 nvl(sum(nvl(OPTION7,0)),0) OPTION7,
+		 nvl(sum(nvl(OPTION8,0)),0) OPTION8,
+		 nvl(sum(nvl(OPTION9,0)),0) OPTION9,
+		 nvl(sum(nvl(OPTION10,0)),0) OPTION10,
+		 nvl(sum(nvl(OPTION11,0)),0) OPTION11,
+		 nvl(sum(nvl(OPTION12,0)),0) OPTION12,
+		 nvl(sum(nvl(OPTION13,0)),0) OPTION13,
+		 nvl(sum(nvl(OPTION14,0)),0) OPTION14,
+		 nvl(sum(nvl(OPTION15,0)),0) OPTION15,
+		 nvl(sum(nvl(OPTION16,0)),0) OPTION16,
+		 nvl(sum(nvl(OPTION17,0)),0) OPTION17,
+		 nvl(sum(nvl(OPTION18,0)),0) OPTION18,
+		 nvl(sum(nvl(OPTION19,0)),0) OPTION19,
+		 nvl(sum(nvl(OPTION20,0)),0) OPTION20,
+		 nvl(sum(nvl(OPTION21,0)),0) OPTION21,
+		 nvl(sum(nvl(OPTION22,0)),0) OPTION22,
+		 nvl(sum(nvl(OPTION23,0)),0) OPTION23,
+		 nvl(sum(nvl(OPTION24,0)),0) OPTION24,
+		 nvl(sum(nvl(OPTION25,0)),0) OPTION25,
+		 nvl(sum(nvl(OPTION26,0)),0) OPTION26,
+		 nvl(sum(nvl(OPTION27,0)),0) OPTION27,
+		 nvl(sum(nvl(OPTION28,0)),0) OPTION28,
+		 nvl(sum(nvl(OPTION29,0)),0) OPTION29,
+		 nvl(sum(nvl(OPTION30,0)),0) OPTION30,
+		nvl(sum(nvl(OPTION31,0)),0)	OPTION31,
+		nvl(sum(nvl(OPTION32,0)),0)	OPTION32,
+		nvl(sum(nvl(OPTION33,0)),0)	OPTION33,
+		nvl(sum(nvl(OPTION34,0)),0)	OPTION34,
+		nvl(sum(nvl(OPTION35,0)),0)	OPTION35,
+		nvl(sum(nvl(OPTION36,0)),0)	OPTION36,
+		nvl(sum(nvl(OPTION37,0)),0)	OPTION37,
+		nvl(sum(nvl(OPTION38,0)),0)	OPTION38,
+		nvl(sum(nvl(OPTION39,0)),0)	OPTION39,
+		nvl(sum(nvl(OPTION40,0)),0)	OPTION40,
+		nvl(sum(nvl(OPTION41,0)),0)	OPTION41,
+		nvl(sum(nvl(OPTION42,0)),0)	OPTION42,
+		nvl(sum(nvl(OPTION43,0)),0)	OPTION43,
+		nvl(sum(nvl(OPTION44,0)),0)	OPTION44,
+		nvl(sum(nvl(OPTION45,0)),0)	OPTION45,
+		nvl(sum(nvl(OPTION46,0)),0)	OPTION46,
+		nvl(sum(nvl(OPTION47,0)),0)	OPTION47,
+		nvl(sum(nvl(OPTION48,0)),0)	OPTION48,
+		nvl(sum(nvl(OPTION49,0)),0)	OPTION49,
+		nvl(sum(nvl(OPTION50,0)),0)	OPTION50,
+		nvl(sum(nvl(OPTION51,0)),0)	OPTION51,
+		nvl(sum(nvl(OPTION52,0)),0)	OPTION52,
+		nvl(sum(nvl(OPTION53,0)),0)	OPTION53,
+		nvl(sum(nvl(OPTION54,0)),0)	OPTION54,
+		nvl(sum(nvl(OPTION55,0)),0)	OPTION55,
+		nvl(sum(nvl(OPTION56,0)),0)	OPTION56,
+		nvl(sum(nvl(OPTION57,0)),0)	OPTION57,
+		nvl(sum(nvl(OPTION58,0)),0)	OPTION58,
+		nvl(sum(nvl(OPTION59,0)),0)	OPTION59,
+		nvl(sum(nvl(OPTION60,0)),0)	OPTION60,
+		nvl(sum(nvl(OPTION61,0)),0)	OPTION61,
+		nvl(sum(nvl(OPTION62,0)),0)	OPTION62,
+		nvl(sum(nvl(OPTION63,0)),0)	OPTION63,
+		nvl(sum(nvl(OPTION64,0)),0)	OPTION64,
+		nvl(sum(nvl(OPTION65,0)),0)	OPTION65,
+		nvl(sum(nvl(OPTION66,0)),0)	OPTION66,
+		nvl(sum(nvl(OPTION67,0)),0)	OPTION67,
+		nvl(sum(nvl(OPTION68,0)),0)	OPTION68,
+		nvl(sum(nvl(OPTION69,0)),0)	OPTION69,
+		nvl(sum(nvl(OPTION70,0)),0)	OPTION70,
+		nvl(sum(nvl(OPTION71,0)),0)	OPTION71,
+		nvl(sum(nvl(OPTION72,0)),0)	OPTION72,
+		nvl(sum(nvl(OPTION73,0)),0)	OPTION73,
+		nvl(sum(nvl(OPTION74,0)),0)	OPTION74,
+		nvl(sum(nvl(OPTION75,0)),0)	OPTION75,
+		nvl(sum(nvl(OPTION76,0)),0)	OPTION76,
+		nvl(sum(nvl(OPTION77,0)),0)	OPTION77,
+		nvl(sum(nvl(OPTION78,0)),0)	OPTION78,
+		nvl(sum(nvl(OPTION79,0)),0)	OPTION79,
+		nvl(sum(nvl(OPTION80,0)),0)	OPTION80,
+		nvl(sum(nvl(OPTION81,0)),0)	OPTION81,
+		nvl(sum(nvl(OPTION82,0)),0)	OPTION82,
+		nvl(sum(nvl(OPTION83,0)),0)	OPTION83,
+		nvl(sum(nvl(OPTION84,0)),0)	OPTION84,
+		nvl(sum(nvl(OPTION85,0)),0)	OPTION85,
+		nvl(sum(nvl(OPTION86,0)),0)	OPTION86,
+		nvl(sum(nvl(OPTION87,0)),0)	OPTION87,
+		nvl(sum(nvl(OPTION88,0)),0)	OPTION88,
+		nvl(sum(nvl(OPTION89,0)),0)	OPTION89,
+		nvl(sum(nvl(OPTION90,0)),0)	OPTION90,
+		nvl(sum(nvl(OPTION91,0)),0)	OPTION91,
+		nvl(sum(nvl(OPTION92,0)),0)	OPTION92,
+		nvl(sum(nvl(OPTION93,0)),0)	OPTION93,
+		nvl(sum(nvl(OPTION94,0)),0)	OPTION94,
+		nvl(sum(nvl(OPTION95,0)),0)	OPTION95,
+		nvl(sum(nvl(OPTION96,0)),0)	OPTION96,
+		nvl(sum(nvl(OPTION97,0)),0)	OPTION97,
+		nvl(sum(nvl(OPTION98,0)),0)	OPTION98,
+		nvl(sum(nvl(OPTION99,0)),0)	OPTION99,
+		0 rs,
+		 #{startdate} TJRQS,
+		 #{enddate} TJRQE
+		from
+			fenpei_ks t
+			where date_format(t.jxrq,'%Y-%m-%d') between #{startdate} and #{enddate}
+			and t.DEPTID in (${deptid})
+
+ -->
+
+	</select>
+
+	<select id="findHead_sflb" resultType="java.util.HashMap">
+   		select  * from (select distinct zbkname,ziduan,zbkindex  from zhibiaoku where isuse='Y'
+   		and id in(select id from option_name where option_name='收费类别') order by zbkindex)
+   	</select>
+
+	<!--    	科室的列值，后台拼接有点麻烦，直接写sql也有难度，我选择分成两步来做，先查到要查询哪些列，然后返回，再进行查询 -->
+	<select id="findOption_sflb" resultType="String">
+		select  ziduan from (select distinct zbkname,ziduan,zbkindex from zhibiaoku where isuse='Y'
+   		and id in(select id from option_name where option_name='收费类别') order by zbkindex)
+	</select>
+	<!-- 	把要查询的列传进来，不知道这样做会不会有影响，毕竟没见过这样做的 -->
+	<select id="findOptionValue_sflb" resultMap="fenpeiks">
+		select deptid,deptname
+		<if test="list.size()>0 and list!=null and list!=''">
+			<foreach item="s" collection="list" open="," separator="," close=",">
+				${s}
+			</foreach>
+			<!-- 		总额，暂时还不知道会不会配置，我在这里先算出来 -->
+			sum(
+			<foreach item="s" collection="list" open="" separator="+" close="">
+				IFNULL(${s},0)
+			</foreach>
+			) as allcount
+		</if>
+		from  fenpei_ks_month where 1=1
+		and hosnum=#{hosnum}
+		<if test="openmonth!=null and openmonth!=''">
+			and date_format(jxrq,'%Y-%m')=#{openmonth}
+		</if>
+		<if test="ksname!=null and ksname !=''">
+			and deptname like '%${ksname}%'
+		</if>
+		group by deptid,deptname
+		<if test="list.size()>0 and list!=null and list!=''">
+			<foreach item="s" collection="list" open="," separator="," close="">
+				${s}
+			</foreach>
+		</if>
+	</select>
+
+	<select id="findLastValue_sflb"  resultMap="fenpeiks">
+		select id,deptid,deptname
+		<if test="list.size()>0 and list!=null and list!=''">
+			<foreach item="s" collection="list" open="," separator="," close=",">
+				${s}
+			</foreach>
+			<!-- 		总额，暂时还不知道会不会配置，我在这里先算出来 -->
+			sum(
+			<foreach item="s" collection="list" open="" separator="+" close="">
+				IFNULL(${s},0)
+			</foreach>
+			) as allcount
+		</if>
+		from  fenpei_ks_month where 1=1
+		<!--<if test="person_dept!=null and person_dept!=''">
+    		and deptid=#{person_dept}
+		</if>-->
+		<if test="tjrqs!=null and tjrqs!=''">
+			and tjrqs=date_format(#{tjrqs},'%Y-%m-%d %h:%i:%s')
+		</if>
+		<if test="tjrqe!=null and tjrqe!=''">
+			and tjrqe=date_format(#{tjrqe},'%Y-%m-%d %h:%i:%s')
+		</if>
+		group by id,deptid,deptname
+		<if test="list.size()>0 and list!=null and list!=''">
+			<foreach item="s" collection="list" open="," separator="," close="">
+				${s}
+			</foreach>
+		</if>
+	</select>
+</mapper>

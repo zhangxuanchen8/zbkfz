@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.declare.PersonalRecordDao">
+	<resultMap id="base" type="PersonalRecord"></resultMap>
+	<select id="findByPage" resultMap="base" parameterType="PersonalRecord">
+ 			select t.*,s.contents as comments from sb_personalrecord t  left join ZC_B_DICTIONARY_U s on t.xcszy=s.nevalue where 1=1 
+ 			<if test="param.unitid!=null and param.unitid!=''">
+ 			and t.unitid = #{param.unitid}
+ 			</if>
+ 			  <if test="param.xm!=null and param.xm!=''">
+ 			 and  t.xm like  CONCAT('%','${param.xm}','%' )
+ 			 </if>
+ 		</select>
+ 		<select id="findByPage1" resultMap="base" parameterType="PersonalRecord">
+ 			select t.*,c.scbj,c.tjdate,c.kqdate,m.name,d.contents zymc,
+ 			ADDDATE(t.qpsj, INTERVAL t.prqx YEAR) as ssss,
+				b.option02,g.sftg
+ 			 from zc_personalrecord t left join cp_user c on t.recordno = c.user_id 
+ 			 left join new_ryzbk n
+    			on t.recordno = n.recordno
+  			left join model m
+   				 on n.pid = m.id
+   				  left join zc_b_dictionary_u d      
+            on d.nevalue=t.xcszy
+            and d.nekey=2
+            left join ZC_B_DICTIONARY_U b
+    		on t.Tjhrzzg = b.contents
+   			and b.Nekey = 15
+   			left join zc_gpwtpzgjg g on g.recordno = t.recordno
+ 			where t.unitid=#{param.unitid}
+ 			 <if test="param.statu!=null and param.statu!=''">
+ 						 and  (t.guidang ='' or t.guidang is null)
+ 			</if>
+ 			<if test="param.year!=null and param.year!=''">
+ 			 and  t.year =#{param.year}  and t.guidang='Y'
+ 			 </if>
+ 			  <if test="param.xm!=null and param.xm!=''">
+ 			  and  t.xm like CONCAT('%','${param.xm}','%' )
+ 			 </if>
+ 			 <if test="param.tjhrzzg!=null and param.tjhrzzg!=''">
+ 			  and t.tjhrzzg =#{param.tjhrzzg}
+ 			 </if>
+ 			 <if test="param.xcszy!=null and param.xcszy!=''">
+ 			  and  t.xcszy =#{param.xcszy}
+ 			 </if>
+ 			 <if test="param.p_id!=null and param.p_id!=''">
+ 						 and  m.id =#{param.p_id}
+ 					 </if>
+ 					 <if test="param.tjdate!=null and param.tjdate!=''">
+ 						 and  c.tjdate =#{param.tjdate}
+ 					 </if>
+ 					  <if test="param.scbj!=null and param.scbj!=''">
+ 						 and  c.scbj =#{param.scbj}
+ 					 </if>
+ 					 <if test="param.option02!=null and param.option02!=''">
+ 					and b.option02=#{param.option02}
+ 					AND g.sftg ='通过'
+ 					AND date_format( sysdate( ), '%Y' ) = date_format( ADDDATE( t.qpsj, INTERVAL t.prqx YEAR ), '%Y' ) 
+ 					<!-- and date_format(sysdate(),'%Y') = date_format(ADDDATE(t.qpsj, INTERVAL t.prqx YEAR),'%Y') -->
+ 			 </if>
+ 			  <if test="param.prqx!=null and param.prqx!=''">
+ 						 and  t.prqx =#{param.prqx}
+ 					 </if>
+ 					 <if test="param.flag=='YY'">
+ 						 and date_format(sysdate(),'%Y') = date_format(ADDDATE(t.qpsj, INTERVAL t.prqx YEAR),'%Y')
+						and sysdate() &gt; ADDDATE(t.qpsj, INTERVAL t.prqx YEAR)
+ 					 </if>
+ 					  <if test="param.flag=='NN'">
+ 						 and date_format(sysdate(),'%Y') = date_format(ADDDATE(t.qpsj, INTERVAL t.prqx YEAR),'%Y')
+						and sysdate() &lt; ADDDATE(t.qpsj, INTERVAL t.prqx YEAR)
+ 					 </if>
+ 					 
+ 		</select>
+ 		<select id="getPerseq" resultType="java.lang.String">
+		   SELECT nextval('PERSPON_SEQ') as nextval
+		   <!-- select record_seq.nextval as nextval from dual -->
+	    </select>
+	      <select id="getppjgpers" resultMap="base" parameterType="PersonalRecord">
+ 			<!-- select t.*  from v_ryzbk t where t.year = date_format(sysdate(),'%Y') and t.state is not null and t.unitid=#{unitid} -->
+ 		
+		 		SELECT
+		t.year,COUNT(*) as nums
+		FROM
+			v_ryzbk t 
+		WHERE
+			  t.unitid = #{unitid}
+			GROUP BY t.year
+			order by t.year desc
+ 		</select>
+ 		<select id="getzyry" resultMap="base" parameterType="PersonalRecord">
+ 		SELECT
+			t.*,e.contents,d.option02,g.sftg,g.cxrs cxrst,g.tyrs tyrst,g.fdrs fdrst,g.eczc,g.ecfd
+		FROM
+			 ZC_PERSONALRECORD t
+			left join zc_gpwtpzgjg g on g.recordno =t.recordno
+			left join zc_gpwtpjg j on j.recordno =t.recordno
+			left  join ZC_B_DICTIONARY_U e
+    on t.xcszy = e.nevalue
+   and e.Nekey = 2
+   AND e.NeValue != '!' 
+	   left join ZC_B_DICTIONARY_U d
+    on t.Tjhrzzg = d.contents
+   and d.Nekey = 15
+   AND d.NeValue != '!'
+		WHERE
+			t.unitid = #{unitid}
+			and t.year=#{year}
+			order by g.sftg desc,d.option02 desc,tyrst desc
+
+ 		
+ 		
+ 			<!-- SELECT
+			t.contents,
+			COUNT(*) as nums
+		FROM
+			v_ryzbk t 
+		WHERE
+			t.unitid = #{unitid}
+			AND t.recordno IN ( SELECT c.recordno FROM zc_gpwtpzgjg c WHERE c.unitid = #{unitid} ) 
+			and t.year=#{year}
+		GROUP BY
+			t.contents -->
+ 		</select>
+ 		<select id="getppjgpery" resultMap="base" parameterType="PersonalRecord">
+ 			select distinct t.recordno, t.xgzdw,t.xm,t.xb,t.idcard,u.contents,t.TJHRZZG,t.csny,t.cjgzsj,
+		t.HSHXHZYBYQ,t.HXBYH,t.zyh,t.xwh,t.xprzw,t.XRZZGQDSJ,t.xcszy,t.XRZZGMC,
+		t.PWHZRS,t.CXRS,t.ZCRS,t.fdrs,t.QTXYSMDWT,
+		t.CXRS1,t.ZCRS1,t.FDRS1, t.txdz, g.sftg , b.option05,b.option02,t.prqx,t.qpsj,COUNT(*) as nums,
+		ADDDATE(t.qpsj, INTERVAL t.prqx YEAR) as ssss
+		from zc_personalrecord t , zc_b_dictionary_u u , zc_gpwtpjg g , zc_b_dictionary_u b
+		where t.xcszy = u.nevalue and u.nekey = 2  and  t.recordno = g.recordno
+		and t.tjhrzzg = b.contents and b.nekey = 15  	and g.sftg = '1'
+		and t.unitid =#{unitid}
+		and date_format(sysdate(),'%Y') = date_format(ADDDATE(t.qpsj, INTERVAL t.prqx YEAR),'%Y')
+		and sysdate() &gt; ADDDATE(t.qpsj, INTERVAL t.prqx YEAR)
+		GROUP BY b.option02
+		order by t.xcszy
+ 		</select>
+ 		<select id="getppjgperw" resultMap="base" parameterType="PersonalRecord">
+ 		select distinct t.recordno, t.xgzdw,t.xm,t.xb,t.idcard,u.contents,t.TJHRZZG,t.csny,t.cjgzsj,
+		t.HSHXHZYBYQ,t.HXBYH,t.zyh,t.xwh,t.xprzw,t.XRZZGQDSJ,t.xcszy,t.XRZZGMC,
+		t.PWHZRS,t.CXRS,t.ZCRS,t.fdrs,t.QTXYSMDWT,
+		t.CXRS1,t.ZCRS1,t.FDRS1, t.txdz, g.sftg , b.option05,b.option02,t.prqx,t.qpsj,COUNT(*) as nums,
+		ADDDATE(t.qpsj, INTERVAL t.prqx YEAR) as ssss
+		from zc_personalrecord t , zc_b_dictionary_u u , zc_gpwtpjg g , zc_b_dictionary_u b
+		where t.xcszy = u.nevalue and u.nekey = 2  and  t.recordno = g.recordno
+		and t.tjhrzzg = b.contents and b.nekey = 15  	and g.sftg = '1'
+		and t.unitid =#{unitid}
+		and date_format(sysdate(),'%Y') = date_format(ADDDATE(t.qpsj, INTERVAL t.prqx YEAR),'%Y')
+		and sysdate() &lt; ADDDATE(t.qpsj, INTERVAL t.prqx YEAR)
+		GROUP BY b.option02
+		order by t.xcszy
+ 		</select>
+	    <select id="getppjgper" resultMap="base" parameterType="PersonalRecord">
+ 		<!-- 	select distinct t.recordno, t.xgzdw,t.xm,t.xb,t.idcard,u.contents,t.TJHRZZG,t.csny,t.cjgzsj,
+		t.HSHXHZYBYQ,t.HXBYH,t.zyh,t.xwh,t.xprzw,t.XRZZGQDSJ,t.xcszy,t.XRZZGMC,
+		t.PWHZRS,t.CXRS,t.ZCRS,t.fdrs,t.QTXYSMDWT,
+		t.CXRS1,t.ZCRS1,t.FDRS1, t.txdz, g.sftg , b.option05,b.option02,t.prqx,t.qpsj,COUNT(*) as nums,
+		ADDDATE(t.qpsj, INTERVAL t.prqx YEAR) as ssss
+		from zc_personalrecord t , zc_b_dictionary_u u , zc_gpwtpjg g , zc_b_dictionary_u b
+		where t.xcszy = u.nevalue and u.nekey = 2  and  t.recordno = g.recordno
+		and t.tjhrzzg = b.contents and b.nekey = 15  	and g.sftg = '1'
+		and t.unitid =#{unitid}
+		and date_format(sysdate(),'%Y') = date_format(ADDDATE(t.qpsj, INTERVAL t.prqx YEAR),'%Y')
+		GROUP BY b.option02,t.prqx
+		order by t.xcszy -->
+		
+	<!-- 	SELECT u.option02,COUNT(*) as nums from zc_gpwtpzgjg t left join zc_b_dictionary_u u on t.tjhrzzg = u.contents and u.nekey=15 
+		where t.unitid=#{unitid}
+		and  date_format(t.tg_time,'%Y') ='2018'
+			group by u.option02 -->
+				
+SELECT
+	u.option02,
+	COUNT( * ) AS nums 
+FROM
+	zc_personalrecord t
+	LEFT JOIN zc_b_dictionary_u u ON t.tjhrzzg = u.contents 
+	AND u.nekey = 15 
+WHERE
+	t.current_manage_unit = #{unitid}
+	AND date_format( sysdate( ), '%Y' ) = date_format( ADDDATE( t.qpsj, INTERVAL t.prqx YEAR ), '%Y' ) 
+GROUP BY
+	u.option02	
+			
+ 		</select>
+	    <select id="getTj" resultType="java.util.Map"  parameterType="PersonalRecord">
+	    select
+		sum( IF ( t.option02 = '正高' &amp;&amp; t.option05 = '医', 1, 0 ) ) AS a1,
+		sum( IF ( t.option02 = '正高' &amp;&amp; t.option05 = '药', 1, 0 ) ) AS a2,
+		sum( IF ( t.option02 = '正高' &amp;&amp; t.option05 = '护', 1, 0 ) ) AS a3,
+		sum( IF ( t.option02 = '正高' &amp;&amp; t.option05 = '技', 1, 0 ) ) AS a4,
+		sum( IF ( t.option02 = '副高' &amp;&amp; t.option05 = '医', 1, 0 ) ) AS a5,
+		sum( IF ( t.option02 = '副高' &amp;&amp; t.option05 = '药', 1, 0 ) ) AS a6,
+		sum( IF ( t.option02 = '副高' &amp;&amp; t.option05 = '护', 1, 0 ) ) AS a7,
+		sum( IF ( t.option02 = '副高' &amp;&amp; t.option05 = '技', 1, 0 ) ) AS a8,
+		sum( IF (  t.option05 = '其他', 1, 0 ) ) AS a9
+			FROM
+		v_ryzbk t where t.unitid=#{unitid} and t.recordno in (select c.recordno from zc_gpwtpzgjg c where c.unitid=#{unitid})
+		and t.year =#{year}
+		<!-- and t.year = date_format(sysdate(),'%Y') -->
+	    </select>
+	    
+	<insert id="insert1" parameterType="PersonalRecord">
+	INSERT INTO zc_personalrecord (recordno,xm,xb,csny,zzmm,idcard,xl,xzzw,zgxl,xcszy,year,unitid,tjhrzzg,current_manage_unit)
+	values (
+	#{recordno,jdbcType=VARCHAR},
+	#{xm,jdbcType=VARCHAR},
+	#{xb,jdbcType=VARCHAR},
+	#{csny,jdbcType=VARCHAR},
+	#{zzmm,jdbcType=VARCHAR},
+	#{idcard,jdbcType=VARCHAR},
+	#{xl,jdbcType=VARCHAR},
+	#{xzzw,jdbcType=VARCHAR},
+	#{zgxl,jdbcType=VARCHAR},
+	#{xcszy,jdbcType=VARCHAR},
+	#{year,jdbcType=VARCHAR},
+	#{unitid,jdbcType=VARCHAR},
+	#{tjhrzzg,jdbcType=VARCHAR},
+	#{current_manage_unit,jdbcType=VARCHAR}
+	)
+	</insert>
+	
+	<update id="updatescryp" >
+ 		update zc_personalrecord set state=#{state}
+ 		 where recordno in (
+ 		<foreach collection="slist" item="s" open="" separator="," >
+ 		 #{s}
+ 		</foreach>
+ 		)
+ 	</update>
+	
+	<insert id="insert" parameterType="PersonalRecord">
+	INSERT INTO sb_personalrecord (recordno,xm,xb,csny,zzmm,idcard,xl,xzzw,zgxl,xcszy,year,unitid)
+	values (
+	#{recordno,jdbcType=VARCHAR},
+	#{xm,jdbcType=VARCHAR},
+	#{xb,jdbcType=VARCHAR},
+	#{csny,jdbcType=VARCHAR},
+	#{zzmm,jdbcType=VARCHAR},
+	#{idcard,jdbcType=VARCHAR},
+	#{xl,jdbcType=VARCHAR},
+	#{xzzw,jdbcType=VARCHAR},
+	#{zgxl,jdbcType=VARCHAR},
+	#{xcszy,jdbcType=VARCHAR},
+	#{year,jdbcType=VARCHAR},
+	#{unitid,jdbcType=VARCHAR}
+	)
+	
+	
+
+	</insert>
+	<select id="findByid" resultMap="base" parameterType="PersonalRecord">
+		select t.* from ZC_PERSONALRECORD t where  t.idcard=#{idcard} and t.year=#{year}
+	</select>
+		<delete id="deletelist" parameterType="java.util.List">
+ 		delete from ZC_PERSONALRECORD where recordno in
+		 	<foreach item="s" collection="slist" open="(" separator="," close=")">
+		 	#{s}
+		 	</foreach>
+ 	</delete>
+	<update id="updategdper" parameterType="java.lang.String">
+ 		update zc_personalrecord set guidang='Y'
+ 		 where recordno in (select n.recordno from new_ryzbk n where n.pid =#{pid})
+ 		
+ 	</update>
+</mapper>

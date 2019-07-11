@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.system.dict.BaseDictDao">
+<resultMap id="base" type="BaseDict" ></resultMap>
+<resultMap type="BaseWordDict" id="baseworddict"></resultMap>
+<select id="findPyWb" resultMap="baseworddict" parameterType="java.util.List">
+select * from BAS_WORDDICT t where t.cnchar in 
+<foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+  #{item}  
+ </foreach> 
+</select>
+
+<select id="getColumneName" resultMap="base" parameterType="BaseDict">
+ select * from bas_dicts t 
+ where t.nevalue='!' 
+ <if test="nekey!=null and nekey !='' ">
+ and t.nekey=#{nekey}
+ </if>
+ order by nevalue
+</select>
+<select id="getdefaultNekey" resultType="String">
+	(select min(t.nekey) as nekey from bas_dicts t where t.nevalue !='!')
+</select>
+
+<select id="getdDictDetailsCount" resultType="int" parameterType="BaseDict">
+ select count(*) from bas_dicts t
+          where t.nevalue != '!'
+            and t.nekey = #{nekey} 
+            and (t.hosnum =#{hosnum} or t.hosnum='0000')
+ <if test="contents!=null and contents !='' ">
+ 	 and contents like  concat('%',#{contents},'%')
+ </if>
+</select>
+
+<select id="getdDictDetails" resultMap="base" parameterType="BaseDict">
+<!--  select OHNO.*
+   from (select t.*, row_number() over(order by t.nevalue) as num
+           from bas_dicts t
+          where t.nevalue != '!'
+        	and t.nekey = #{nekey} 
+        	and (t.hosnum =#{hosnum} or t.hosnum='0000')
+        	<if test="contents!=null and contents !='' ">
+				 and contents like  concat('%',#{contents},'%')
+			</if>
+     ) OHNO
+     where 1=1
+  and num between #{indexStart} and #{indexEnd}
+ order by OHNO.nevalue -->
+ SELECT
+	OHNO.* 
+FROM
+	(
+	SELECT
+		t.*
+	FROM
+		bas_dicts t 
+	WHERE
+		t.nevalue != '!' 
+		AND t.nekey = #{nekey} 
+		AND (
+			t.hosnum = #{hosnum} or t.hosnum='0000')
+			<if test="contents!=null and contents !='' ">
+				 and contents like  concat('%',#{contents},'%')
+			</if>
+			) OHNO 
+		WHERE
+			1 = 1 
+	ORDER BY
+	OHNO.nevalue
+			LIMIT #{indexStart},
+					#{indexEnd}
+ 
+ 
+</select>
+
+<select id="checkNevalue" resultMap="base" parameterType="String">
+	select * from bas_dicts t where t.nevalue = #{nevalue} and t.nekey = #{nekey} and t.hosnum =#{hosnum}
+	<if test="dictid!=null and dictid !='' ">
+		and t.dictid!=#{dictid}
+	</if>
+	
+</select>
+
+<insert id="add" parameterType="BaseDict">
+	insert into bas_dicts (dictid,hosnum,sysname,nekey,nevalue,contents,isdefault,option01,option02,option03,option04,option05,option06,option07,option08,option09,option10,canedit,comments,inputcpy,inputcwb,stdinfo,isdeleted,option11,isgdb)
+	values(#{dictid,jdbcType=VARCHAR},#{hosnum,jdbcType=VARCHAR},#{sysname,jdbcType=VARCHAR},#{nekey,jdbcType=NUMERIC},#{nevalue,jdbcType=VARCHAR},#{contents,jdbcType=VARCHAR},#{isdefault,jdbcType=VARCHAR},#{option01,jdbcType=VARCHAR},#{option02,jdbcType=VARCHAR},#{option03,jdbcType=VARCHAR},#{option04,jdbcType=VARCHAR},#{option05,jdbcType=VARCHAR},#{option06,jdbcType=VARCHAR},#{option07,jdbcType=VARCHAR},#{option08,jdbcType=VARCHAR},#{option09,jdbcType=VARCHAR},#{option10,jdbcType=VARCHAR},#{canedit,jdbcType=NUMERIC},#{comments,jdbcType=VARCHAR},#{inputcpy,jdbcType=VARCHAR},#{inputcwb,jdbcType=VARCHAR},#{stdinfo,jdbcType=VARCHAR},#{isdeleted,jdbcType=VARCHAR},#{option11,jdbcType=VARCHAR},#{isgdb,jdbcType=VARCHAR})
+</insert>
+
+<update id="updateByDictId" parameterType="BaseDict">
+ 	update bas_dicts set hosnum=#{hosnum,jdbcType=VARCHAR},sysname=#{sysname,jdbcType=VARCHAR},nekey=#{nekey,jdbcType=NUMERIC},nevalue=#{nevalue,jdbcType=NUMERIC},contents=#{contents,jdbcType=VARCHAR},isdefault=#{isdefault,jdbcType=VARCHAR},option01=#{option01,jdbcType=VARCHAR},option02=#{option02,jdbcType=VARCHAR},option03=#{option03,jdbcType=VARCHAR},option04=#{option04,jdbcType=VARCHAR},option05=#{option05,jdbcType=VARCHAR},option06=#{option06,jdbcType=VARCHAR},option07=#{option07,jdbcType=VARCHAR},option08=#{option08,jdbcType=VARCHAR},option09=#{option09,jdbcType=VARCHAR},option10=#{option10,jdbcType=VARCHAR},canedit=#{canedit,jdbcType=NUMERIC},comments=#{comments,jdbcType=VARCHAR},inputcpy=#{inputcpy,jdbcType=VARCHAR},inputcwb=#{inputcwb,jdbcType=VARCHAR},stdinfo=#{stdinfo,jdbcType=VARCHAR},isdeleted=#{isdeleted,jdbcType=VARCHAR},option11=#{option11,jdbcType=VARCHAR},isgdb=#{isgdb,jdbcType=VARCHAR}
+	where dictid = #{dictid}
+</update>
+
+<delete id="deleteByDictId" parameterType="String">
+delete bas_dicts t where t.dictid = #{dictid}
+</delete>
+<select id="selectDictByNekey" resultMap="base" parameterType="BaseDict">
+    select * from bas_dicts t where  (t.hosnum=#{hosnum} or  t.hosnum='0000')  and t.nekey=${nekey} 
+    and t.nevalue != '!' order by t.nevalue asc
+</select>
+<select id="selectDictByNekeys" resultMap="base" parameterType="BaseDict">
+    select * from ZC_B_DICTIONARY_U t where  t.nekey=${nekey} 
+     <if test="contents!=null and contents!=''"> 
+    and t.contents =#{contents}
+  </if>
+    and t.nevalue != '!' order by t.nevalue asc
+</select>
+<select id="find" resultMap="base" parameterType="BaseDict">
+    select * from bas_dicts t where  (t.hosnum=#{hosnum} or  t.hosnum='0000') 
+    <if test="nekey!=null and nekey!=''">  and t.nekey=${nekey} </if>
+   <if test="contents!=null and contents!=''">   and t.contents =#{contents} </if>
+   <if test="option01!=null and option01!=''">   and t.option01=#{option01} </if>
+    <if test="dictid!=null and dictid!=''">   and t.dictid != #{dictid} </if>
+     order by t.nevalue asc
+</select>
+
+<select id="isInDictByNekey" resultMap="base" parameterType="String">
+	select * from bas_dicts t where t.nevalue = #{nevalue} and t.nekey = #{nekey}
+</select>
+<select id="findnevalue" resultMap="base" parameterType="BaseDict">
+	select * from bas_dicts t where t.nekey = #{nekey} 
+ 	and t.contents=#{contents} 
+	and t.option01=#{option01}
+</select>
+<select id="finddengji" resultMap="base" parameterType="BaseDict">
+	select * from bas_dicts t where t.nekey = #{nekey} 
+	and t.option01=#{option01}
+</select>
+<select id="getDictByContents" resultMap="base" parameterType="BaseDict">
+select t.* from bas_dicts t where t.nevalue != '!' and t.nekey = #{nekey} and contents like  concat('%',#{contents},'%')
+</select>
+<update id="updatexinziwh" parameterType="BaseDict">
+ 	update bas_dicts set option02=#{option02,jdbcType=VARCHAR},option03=#{option03,jdbcType=VARCHAR}
+	where nekey = #{nekey} and  nevalue = #{nevalue}
+</update>
+<select id="findByPage" resultMap="base" parameterType="BaseDict">
+select t.*
+  from BAS_DICTS t
+ where 1=1
+   <if test="param.nevalue!=null and param.nevalue!=''"> 
+    and t.nevalue  !=  '!'
+  </if>
+  <if test="param.nekey!=null and param.nekey!=''"> 
+    and t.nekey  =  #{param.nekey}
+  </if>
+   <if test="param.option01!=null and param.option01!=''"> 
+    and t.option01  =  #{param.option01}
+  </if>
+   order by t.option01,t.nevalue
+</select>
+<insert id="insert" parameterType="BaseDict">
+	insert into bas_dicts
+  (dictid,
+   hosnum,
+   sysname,
+   nekey,
+   nevalue,
+   contents,
+   isdefault,
+   option01,
+   option02,
+   option03,
+   option04,
+   option05,
+   option06,
+   option07,
+   option08,
+   option09,
+   option10,
+   canedit,
+   comments,
+   inputcpy,
+   inputcwb,
+   stdinfo,
+   isdeleted,
+   option11,
+   isgdb)
+	values
+  (
+  #{dictid,jdbcType = VARCHAR},
+   #{hosnum,jdbcType = VARCHAR},
+   #{sysname,jdbcType = VARCHAR},
+   #{nekey,jdbcType = NUMERIC},
+   (select decode(max(to_number(decode(nevalue, null, '0', nevalue))),null,1,to_number(max(to_number(decode(nevalue, null, '0', nevalue)))) + 1)from BAS_DICTS t where t.nekey = '9' and  t.nevalue != '!'),
+   #{contents,jdbcType = VARCHAR},
+   #{isdefault,jdbcType = VARCHAR},
+   #{option01,jdbcType = VARCHAR},
+   #{option02,jdbcType = VARCHAR},
+   #{option03,jdbcType = VARCHAR},
+   #{option04,jdbcType = VARCHAR},
+   #{option05,jdbcType = VARCHAR},
+   #{option06,jdbcType = VARCHAR},
+   #{option07,jdbcType = VARCHAR},
+   #{option08,jdbcType = VARCHAR},
+   #{option09,jdbcType = VARCHAR},
+   #{option10,jdbcType = VARCHAR},
+   #{canedit,jdbcType = NUMERIC},
+   #{comments,jdbcType = VARCHAR},
+   #{inputcpy,jdbcType = VARCHAR},
+   #{inputcwb,jdbcType = VARCHAR},
+   #{stdinfo,jdbcType = VARCHAR},
+   #{isdeleted,jdbcType = VARCHAR},
+   #{option11,jdbcType = VARCHAR},
+   #{isgdb,jdbcType = VARCHAR}
+   )
+
+</insert>
+<select id="findById" resultMap="base" >
+select t.*,s.contents as ssqy from BAS_DICTS t 
+left join BAS_DICTS s
+    on t.option01 = s.nevalue
+ where t.dictid = #{dictid}
+</select>
+<select id="findNevalue" resultMap="base" parameterType="BaseDict">
+	select * from bas_dicts where nevalue!='!' and (hosnum=#{hosnum} or  hosnum='0000') 
+	and nekey=#{nekey}
+	and contents=#{contents}
+</select>
+</mapper>

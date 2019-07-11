@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiao.zbkwhDao">
+<resultMap id="base" type="zbkwh" ></resultMap>
+	<select id="findByPage" resultMap="base" parameterType="zbkwh">
+ 			select t.* from zbk_wh t where 1=1 
+ 			 <if test="param.category!=null and param.category!=''">
+ 			 and  t.category=#{param.category}
+ 			 </if>
+ 			  <if test="param.zbkmc!=null and param.zbkmc!=''">
+ 			 and  t.zbkmc LIKE CONCAT('%','${param.zbkmc}','%' )
+ 			 </if>
+ 			 order by category,yjfl desc,ejfl desc
+ 	</select>
+ 	<select id="findById" resultMap="base" parameterType="zbkwh">
+ 		select * from zbk_wh where id=#{id}
+ 	</select>
+ 	<insert id="insert" parameterType="zbkwh">
+	 	insert into zbk_wh(id,hosnum,zbkmc,category,yjfl,ejfl,score,item_desc) 
+	 	values(
+	 	#{id,jdbcType=VARCHAR},
+	 	#{hosnum,jdbcType=VARCHAR},
+	 	#{zbkmc,jdbcType=VARCHAR},
+	 	#{category,jdbcType=VARCHAR},
+	 	#{yjfl,jdbcType=VARCHAR},
+	 	#{ejfl,jdbcType=VARCHAR},
+	 	#{score,jdbcType=VARCHAR},
+	 	#{item_desc,jdbcType=VARCHAR}
+	 	)
+ 	</insert>
+ 	<update id="update" parameterType="zbkwh">
+	 	update zbk_wh set
+	 	hosnum=#{hosnum,jdbcType=VARCHAR},
+	 	zbkmc=#{zbkmc,jdbcType=VARCHAR},
+	 	category=#{category,jdbcType=VARCHAR},
+	 	yjfl=#{yjfl,jdbcType=VARCHAR},
+	 	ejfl=#{ejfl,jdbcType=VARCHAR},
+	 	score=#{score,jdbcType=VARCHAR},
+	 	item_desc=#{item_desc,jdbcType=VARCHAR}
+	 	where 
+	 	id=#{id,jdbcType=VARCHAR}
+ 	</update>
+ 	<delete id="deletelist" parameterType="java.util.List">
+ 		delete from zbk_wh where id in
+		 	<foreach item="s" collection="slist" open="(" separator="," close=")">
+		 	#{s}
+		 	</foreach>
+ 	</delete>
+ 	<select id="findlist" resultMap="base" parameterType="java.util.List">
+ 		select t.* from zbk_wh t where t.id in 
+ 		<foreach collection="clist" item="c" open="("  separator="," close=")" index="index" >
+ 		#{c}
+ 		</foreach>
+ 	</select>
+</mapper>

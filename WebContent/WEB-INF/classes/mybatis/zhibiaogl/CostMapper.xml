@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiaogl.costDao">
+    <resultMap id="base" type="cost"></resultMap> 
+    <resultMap id="fenpeiks" type="fenpeiks"></resultMap> 
+    <!-- <resultMap id="DeptInfo" type="DeptInfo"></resultMap> -->
+    <resultMap id="ZNodes" type="com.ehinfo.hr.common.utils.tree.entity.ZNodes"></resultMap>
+    <select id="detailFind" resultMap="base">
+    	select a.id,a.costdate,b.name as deptname,a.medical,a.logistics,a.depreciation,a.waterelectric,a.other,a.allcount
+    	from cost a left join bas_dept b
+    	on a.deptid=b.id
+    	where 1=1
+    	<if test="openmonth!=null and openmonth!=''">
+    		and date_format(costdate,'%Y-%m')=#{openmonth}
+    	</if>
+    	<if test="ksname!=null and ksname !=''">
+    		and ksname like '%${ksname}%'
+    	</if>
+    </select>
+    <select id="FindLastCost" resultMap="base" parameterType="String">
+    	select a.id,a.costdate,b.name as deptname,a.medical,a.logistics,a.depreciation,a.waterelectric,a.other,a.allcount
+    	from cost a left join bas_dept b
+    	on a.deptid=b.id
+    	where 1=1 
+    	and date_format(a.costdate,'%Y-%m')=date_format(add_months(now(),-1),'%Y-%m')
+    	and a.deptid=#{deptid}
+    </select>
+<!--     导出模板的时候需要把账号所属医院科室都输出到excel,方便别人导入 -->
+    <select id="findDeptList" resultMap="base" parameterType="String">
+<!--     	select a.id as deptid,a.name as deptname,count(1) as allcount from bas_dept a left join hr_employee b on a.id=b.departmentid where a.hosnum=#{hosnum} -->
+<!--     	group by a.id,a.name -->
+		select a.deptid,a.deptname from fenpei_ks_month a where hosnum=#{hosnum}
+    </select>
+    <insert id="insert" parameterType="fenpeiks">
+ 		insert into fenpei_ks(id,jxrq,hosnum,deptid,deptname,rs,
+ 		option1,option2,option3,option4,option5,option6,option7,option8,option9,option10,
+ 		option11,option12,option13,option14,option15,option16,option17,option18,option19,option20,
+ 		option21,option22,option23,option24,option25,option26,option27,option28,option29,option30)
+ 		values(
+ 		#{id,jdbcType=VARCHAR},
+ 		#{jxrq,jdbcType=DATE},
+ 		#{hosnum,jdbcType=VARCHAR},
+ 		#{deptid,jdbcType=VARCHAR},
+ 		#{deptname,jdbcType=VARCHAR},
+ 		#{rs,jdbcType=VARCHAR},
+ 		#{OPTION1,jdbcType=VARCHAR},
+ 		#{OPTION2,jdbcType=VARCHAR},
+ 		#{OPTION3,jdbcType=VARCHAR},
+ 		#{OPTION4,jdbcType=VARCHAR},
+ 		#{OPTION5,jdbcType=VARCHAR},
+ 		#{OPTION6,jdbcType=VARCHAR},
+ 		#{OPTION7,jdbcType=VARCHAR},
+ 		#{OPTION8,jdbcType=VARCHAR},
+ 		#{OPTION9,jdbcType=VARCHAR},
+ 		#{OPTION10,jdbcType=VARCHAR},
+ 		#{OPTION11,jdbcType=VARCHAR},
+ 		#{OPTION12,jdbcType=VARCHAR},
+ 		#{OPTION13,jdbcType=VARCHAR},
+ 		#{OPTION14,jdbcType=VARCHAR},
+ 		#{OPTION15,jdbcType=VARCHAR},
+ 		#{OPTION16,jdbcType=VARCHAR},
+ 		#{OPTION17,jdbcType=VARCHAR},
+ 		#{OPTION18,jdbcType=VARCHAR},
+ 		#{OPTION19,jdbcType=VARCHAR},
+ 		#{OPTION20,jdbcType=VARCHAR},
+ 		#{OPTION21,jdbcType=VARCHAR},
+ 		#{OPTION22,jdbcType=VARCHAR},
+ 		#{OPTION23,jdbcType=VARCHAR},
+ 		#{OPTION24,jdbcType=VARCHAR},
+ 		#{OPTION25,jdbcType=VARCHAR},
+ 		#{OPTION26,jdbcType=VARCHAR},
+ 		#{OPTION27,jdbcType=VARCHAR},
+ 		#{OPTION28,jdbcType=VARCHAR},
+ 		#{OPTION29,jdbcType=VARCHAR},
+ 		#{OPTION30,jdbcType=VARCHAR}
+ 		)
+   	</insert>
+   	<delete id="deletekslast">
+   		delete from fenpei_ks where 
+   		date_format(jxrq,'%Y-%m')=date_format(#{costdate},'%Y-%m')
+   		and deptid=#{deptid}
+   	</delete>
+   	<update id="affirm" parameterType="String">
+   		update fenpei_ks set affirm='Y' 
+   		where 1=1 
+    	and date_format(jxrq,'%Y-%m')=date_format(add_months(now(),-1),'%Y-%m')
+    	and deptid=#{person_dept}
+   	</update>
+   		<update id="returnaffirm" parameterType="String">
+   		update fenpei_ks set affirm='N' 
+   		where 1=1 
+    	and date_format(jxrq,'%Y-%m')=date_format(add_months(now(),-1),'%Y-%m')
+    	and deptid=#{person_dept}
+   	</update>
+   	<select id="isaffirm" resultMap="base" parameterType="String">
+   		select * from fenpei_ks 
+   		where 1=1 
+    	and date_format(jxrq,'%Y-%m')=date_format(add_months(now(),-1),'%Y-%m')
+    	and deptid=#{person_dept}
+   		and affirm='Y'
+   	</select>
+    <select id="findByPage" resultMap="base" parameterType="cost">
+    	select * from cost 
+    </select>
+   	<select id="findById" resultMap="base" parameterType="cost">
+   		select * from cost where id=#{id}
+   	</select>
+   	<delete id="deleteBatch" parameterType="java.util.List">
+   		delete from cost where id in(
+   		<foreach item="o" collection="list" open="" separator="," close="" >
+   		#{o.id}
+   		</foreach>
+   		)
+   	</delete>
+   	<select id="findHead" resultType="String">
+   		select  zbkname from (select distinct zbkname,ziduan,zbkindex  from zhibiaoku where isuse='Y'
+   		and id in(select id from option_name where option_name='成本') order by zbkindex) 
+   	</select>
+<!--    	科室的列值，后台拼接有点麻烦，直接写sql也有难度，我选择分成两步来做，先查到要查询哪些列，然后返回，再进行查询 -->
+	<select id="findOption" resultType="String">
+		select  ziduan from (select distinct zbkname,ziduan,zbkindex from zhibiaoku where isuse='Y'
+   		and id in(select id from option_name where option_name='成本') order by zbkindex) 
+	</select>
+<!-- 	把要查询的列传进来，不知道这样做会不会有影响，毕竟没见过这样做的 -->
+	<select id="findOptionValue" resultMap="fenpeiks">
+		select deptid,deptname
+		<if test="list.size()>0 and list!=null and list!=''">
+		<foreach item="s" collection="list" open="," separator="," close=",">
+		${s}
+		</foreach>
+<!-- 		总额，暂时还不知道会不会配置，我在这里先算出来 -->
+		sum(
+		<foreach item="s" collection="list" open="" separator="+" close="">
+		IFNULL(${s},0)
+		</foreach>
+		) as allcount
+		</if>
+		from  fenpei_ks_month where 1=1
+		and hosnum=#{hosnum}
+		<if test="openmonth!=null and openmonth!=''">
+    		and date_format(jxrq,'%Y-%m')=#{openmonth}
+    	</if>
+    	<if test="ksname!=null and ksname !=''">
+    		and deptname like '%${ksname}%'
+    	</if>
+		group by deptid,deptname
+		<if test="list.size()>0 and list!=null and list!=''">
+		<foreach item="s" collection="list" open="," separator="," close="">
+		${s}
+		</foreach>
+		</if>
+	</select>
+	<select id="findLastValue"  resultMap="fenpeiks">
+		select deptid,deptname
+		<if test="list.size()>0 and list!=null and list!=''">
+		<foreach item="s" collection="list" open="," separator="," close=",">
+		${s}
+		</foreach>
+<!-- 		总额，暂时还不知道会不会配置，我在这里先算出来 -->
+		sum(
+		<foreach item="s" collection="list" open="" separator="+" close="">
+		IFNULL(${s},0)
+		</foreach>
+		) as allcount
+		</if>
+		from  fenpei_ks_month where 1=1
+		<!--<if test="person_dept!=null and person_dept!=''">
+    		and deptid=#{person_dept}
+		</if>-->
+    	<if test="tjrqs!=null and tjrqs!=''">
+    		and tjrqs=date_format(#{tjrqs},'%Y-%m-%d %h:%i:%s')
+    	</if>
+    	<if test="tjrqe!=null and tjrqe!=''">
+    		and tjrqe=date_format(#{tjrqe},'%Y-%m-%d %h:%i:%s')
+    	</if>
+    	group by deptid,deptname
+		<if test="list.size()>0 and list!=null and list!=''">
+		<foreach item="s" collection="list" open="," separator="," close="">
+		${s}
+		</foreach>
+		</if>
+	</select>
+	<update id="updateoption">
+		update fenpei_ks_month set 
+		<foreach item="s" collection="param" open="" separator="," close="" >
+			${s.deptid}=#{s.deptname}
+		</foreach>
+		where date_format(tjrqe,'%Y-%m-%d %h:%i:%s')=date_format(#{fenpei.tjrqe,jdbcType=TIMESTAMP},'%Y-%m-%d %h:%i:%s')
+		and deptid=#{fenpei.deptid}
+	</update>
+	
+	
+	<!-- 绩效查看 -->
+	   	<select id="findHead_jx" resultType="String">
+   		select  zbkname from (select distinct zbkname,ziduan,zbkindex  from zhibiaoku where isuse='Y'
+   		and id in(select id from option_name where option_name='绩效') order by zbkindex) 
+   	</select>
+<!--    	科室的列值，后台拼接有点麻烦，直接写sql也有难度，我选择分成两步来做，先查到要查询哪些列，然后返回，再进行查询 -->
+	<select id="findOption_jx" resultType="String">
+		select  ziduan from (select distinct zbkname,ziduan,zbkindex from zhibiaoku where isuse='Y'
+   		and id in(select id from option_name where option_name='绩效') order by zbkindex) 
+	</select>
+</mapper>

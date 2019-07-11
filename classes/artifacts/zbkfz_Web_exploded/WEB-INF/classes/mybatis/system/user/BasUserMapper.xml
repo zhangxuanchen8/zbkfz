@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.system.user.BasUserDao">
+	<!--  com.ehinfo.hr.entity.system.account.Account -->
+    <resultMap id="baseUser" type="BaseUser"></resultMap> 
+    <!-- 防止密码外泄，取消密码列 -->
+    <select id="find" resultMap="baseUser" parameterType="BaseUser">
+       SELECT t.*,s.name as dept_name,h.hosname as hosname FROM bas_user t ,bas_dept s ,BAS_HOSPITALS h
+      WHERE 1=1 and job_no=#{job_no}  and t.person_dept = s.id and t.hosnum = h.hosnum 
+    </select> 
+    
+    <select id="findById" resultMap="baseUser" parameterType="BaseUser">
+       SELECT t.*,s.name as dept_name FROM bas_user t ,bas_dept s ,BAS_HOSPITALS h
+      WHERE 1=1 and t.id=#{id} and t.person_dept = s.id and t.hosnum = h.hosnum 
+    </select> 
+    
+    <select id="getAllRolesId" resultType="String" parameterType="BaseUser">
+     SELECT group_concat(t.role_id) as roles FROM BAS_USER_DEPT_ROLE_RELATION t 
+      WHERE 1=1 and t.user_id=#{id} and OFFICE_ID=#{person_dept}
+    </select>
+    
+     <select id="findFormatByLoginName"  resultMap="baseUser" parameterType="String">
+    	<![CDATA[
+       SELECT a.*,s.name as dept_name,h.hosname as hosname,( SELECT group_concat(ss.role_id) as roles FROM BAS_USER_DEPT_ROLE_RELATION ss 
+      WHERE 1=1 and ss.user_id=a.id) as roles FROM bas_user a,bas_dept s ,BAS_HOSPITALS h WHERE 1=1 
+       AND a.del_sign='N' and stop_Sign='N' and a.person_dept = s.id and h.hosnum = a.hosnum
+       AND a.JOB_NO=#{loginName}   
+       ]]>  
+    </select>
+    <!--  防止密码外泄，取消密码列 -->
+ 		<select id="findByPage"  resultMap="baseUser" parameterType="BaseUser">
+      SELECT t.*,s.name as dept_name FROM bas_user t left join bas_dept s  
+     on t.person_dept = s.id 
+      WHERE 1=1
+        <if test="param.name != null and param.name !='' ">
+        	AND t.name like  concat('%',#{param.name},'%') 
+       </if>  
+       <if test="param.person_dept != null and param.person_dept !='' ">
+	 and FIND_IN_SET(t.person_dept,(select getChildList_bas(#{param.person_dept})))>0
+       </if> 
+      <if test="param.person_dept == null or param.person_dept =='' ">
+       and FIND_IN_SET(t.person_dept,(select getChildList_bas(#{param.person_dept})))>0
+       </if> 
+       and stop_sign='N' and del_sign='N' 
+      <!--  and t.hosnum=#{param.hosnum} -->
+    </select>  
+    
+    <select id="findByPageDWZ"  resultMap="baseUser" parameterType="BaseUser">
+      SELECT t.*,s.name as dept_name FROM bas_user t left join bas_dept s  
+     on t.person_dept = s.id 
+      WHERE 1=1
+        <if test="param.name != null and param.name !='' ">
+        	AND t.name like  concat('%',#{param.name},'%')
+       </if>  
+       and person_dept in  
+       <foreach item="item" collection="list" open="("  separator="," close=")" >
+			'${item.person_dept}'
+		</foreach>
+       and stop_sign='N' and del_sign='N' 
+      <!--  and t.hosnum=#{param.hosnum} -->
+    </select>  
+    
+    <insert id="insertRole"  parameterType="BaseUser">
+    	insert into BAS_USER_DEPT_ROLE_RELATION(user_id,office_id,role_id,hosnum) values(
+    		#{id,jdbcType=VARCHAR},
+			#{person_dept,jdbcType=VARCHAR},
+			#{roles,jdbcType=VARCHAR},
+			#{hosnum,jdbcType=VARCHAR}
+    	)
+    </insert>
+    	
+    <delete id="deleteRole"  parameterType="BaseUser">
+    	delete from  BAS_USER_DEPT_ROLE_RELATION where user_Id = #{id} and  office_id=#{person_dept}
+    </delete>	
+           
+ 	<insert id="insert"  parameterType="BaseUser">	
+ 		insert into bas_user(id,hosnum,user_key,password,name,idcard,sex,birthdate,phone,mobile,short_mobile,email,post,post_code,index_no,reg_date,stop_sign,del_sign,remark,input_cpy,input_cwb,input_custom,job_no,person_dept,ehruser_key,ehrpassword,ehrrole,clcpower,zc) values(
+ 		#{id,jdbcType=VARCHAR},
+#{hosnum,jdbcType=VARCHAR},
+#{user_key,jdbcType=VARCHAR},
+#{password,jdbcType=VARCHAR},
+#{name,jdbcType=VARCHAR},
+#{idcard,jdbcType=VARCHAR},
+#{sex,jdbcType=VARCHAR},
+#{birthdate,jdbcType=DATE},
+#{phone,jdbcType=VARCHAR},
+#{mobile,jdbcType=VARCHAR},
+#{short_mobile,jdbcType=VARCHAR},
+#{email,jdbcType=VARCHAR},
+#{post,jdbcType=VARCHAR},
+#{post_code,jdbcType=VARCHAR},
+#{index_no,jdbcType= NUMERIC },
+#{reg_date,jdbcType= DATE },
+#{stop_sign,jdbcType=VARCHAR},
+#{del_sign,jdbcType=VARCHAR},
+#{remark,jdbcType=VARCHAR},
+#{input_cpy,jdbcType=VARCHAR},
+#{input_cwb,jdbcType=VARCHAR},
+#{input_custom,jdbcType=VARCHAR},
+#{job_no,jdbcType=VARCHAR},
+#{person_dept,jdbcType=VARCHAR},
+#{ehruser_key,jdbcType=VARCHAR},
+#{ehrpassword,jdbcType=VARCHAR},
+#{ehrrole,jdbcType=VARCHAR},
+#{clcpower,jdbcType=VARCHAR},
+#{zc,jdbcType=VARCHAR}
+ 		)
+	</insert>
+	<delete id="delete" parameterType="BaseUser">
+	delete from Bas_user   
+	WHERE id=#{id}
+	</delete>
+	<update id="deleteBatch" parameterType ="java.util.List">
+	update bas_user set del_sign='Y',reg_date=now() WHERE id in(
+		<foreach item="o" collection="list" open="" separator="," close="" >
+			#{o.id}
+		</foreach>
+		)
+	</update>
+	<update id="update" parameterType="BaseUser">
+		update bas_user set
+			password=#{password}
+		where 
+			id=#{id}
+	</update>
+   
+   <select id="findUserByRoleAndHos" resultMap="baseUser">
+<!--    select t.id,t.name,t.hosnum,e.hosname,t.mobile,t.sex from bas_user t left join bas_hospitals e on t.hosnum = e.hosnum where t.id in(
+   select a.user_id from BAS_USER_DEPT_ROLE_RELATION a left join BAS_ROLE b on a.role_id =b.id where b.name=#{rolename} 
+    and a.hosnum in (select hosnum from bas_hospitals where hosnum=#{hosnum}  or hosnum = (select supunit from bas_hospitals where  hosnum=#{hosnum})))
+   ) -->
+   
+   select t.id, t.name, t.hosnum, e.hosname, t.mobile, t.sex,t.person_dept
+  from bas_user t
+  left join bas_hospitals e
+    on t.hosnum = e.hosnum
+ where t.id in (select a.user_id
+                  from BAS_USER_DEPT_ROLE_RELATION a
+                  left join BAS_ROLE b
+                    on a.role_id = b.id
+                 where b.name =#{rolename} 
+                   and a.hosnum in (select hosnum from bas_hospitals where hosnum=#{hosnum} or hosnum = (select supunit from bas_hospitals where  hosnum=#{hosnum})))
+   
+   </select>
+   
+</mapper>

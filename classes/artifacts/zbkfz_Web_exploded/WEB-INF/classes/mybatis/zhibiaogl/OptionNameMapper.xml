@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiaogl.optionDao">
+    <resultMap id="base" type="optionName"></resultMap> 
+    <select id="findByPage" resultMap="base" parameterType="optionName" >
+    	select a.id,a.option_name,b.zbkname as  from option_name a left join zhibiaoku b on a.id=b.id
+    	where 1=1
+    	<if test="param.option_name!=null and param.option_name!=''">
+    		and option_name=#{param.option_name}
+    	</if>
+    </select>
+    <insert id="insert" parameterType="optionName">
+    	insert into option_name(id,option_name) values(
+    	#{id,jdbcType=VARCHAR},
+    	#{option_name,jdbcType=VARCHAR}
+    	)
+    </insert>
+    <delete id="deleteBatch" parameterType="java.util.List">
+    	delete from option_name where id in(
+    	<foreach collection="list" item="l" open="" separator="," close="">
+    	#{l.id}
+    	</foreach>
+    	)
+    </delete>
+    <select id="getOption" resultMap="base" parameterType="String">
+    	select * from option_name a left join zhibiaoku b on a.id=b.id where a.option_name=#{option} and b.hosnum=#{hosnum}
+    </select>
+    <delete id="deleteOriginal">
+    	delete from option_name where option_name=#{option_name}
+    	and id in (select id from zhibiaoku where hosnum=#{hosnum})
+    </delete>
+    <insert id="insertMulti">
+    	insert all 
+    	<foreach collection="chk" item="item" index="index" open="" separator="" close="">
+    	into option_name(id,option_name) values(#{item},#{option_name})
+    	</foreach>
+    	select 1 from dual
+    </insert>
+</mapper>

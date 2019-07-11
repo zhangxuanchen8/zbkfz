@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.caiji.ShuJu_pzDao">
+ 	<resultMap id="base" type="ShuJu_pz" ></resultMap>
+ 	<select id="findByPage"  resultMap="base" parameterType="ShuJu_pz">
+ 		select * from SOURCES_PZ
+ 		<!-- <if test="param.caiji_date1!=null and param.caiji_date1!=''">
+ 			and zxdate &gt;= #{param.caiji_date1}
+ 		</if>
+ 		<if test="param.caiji_date2!=null and param.caiji_date2!=''">
+ 			and zxdate &lt;= #{param.caiji_date2}
+ 		</if> -->
+ 		order by s_name desc
+ 	</select>
+ 	<insert id="insert">
+ 		insert into SOURCES_PZ (
+ 			id,s_name,sources,ip,user_account,pwd,port,stype,remark,sqlname,update_man,update_time
+ 		)
+ 		values(
+			#{id,jdbcType=VARCHAR},
+			#{s_name,jdbcType=VARCHAR},
+			#{sources,jdbcType=VARCHAR},
+			#{ip,jdbcType=VARCHAR},
+			#{user_account,jdbcType=VARCHAR},
+			#{pwd,jdbcType=VARCHAR},
+			#{port,jdbcType=VARCHAR},
+			#{stype,jdbcType=VARCHAR},
+			#{remark,jdbcType=VARCHAR},
+			#{sqlname,jdbcType=VARCHAR},
+			#{update_man,jdbcType=VARCHAR},
+			now()
+ 		)
+ 	</insert>
+ 	<update id="update" parameterType="ShuJu_pz">
+ 		update SOURCES_PZ set
+ 			s_name=#{s_name,jdbcType=VARCHAR},
+ 			sources=#{sources,jdbcType=VARCHAR},
+ 			ip=#{ip,jdbcType=VARCHAR},
+ 			user_account=#{user_account,jdbcType=VARCHAR},
+			pwd=#{pwd,jdbcType=VARCHAR},
+ 			port=#{port,jdbcType=VARCHAR},
+ 			stype=#{stype,jdbcType=VARCHAR},
+ 			remark=#{remark,jdbcType=VARCHAR},
+ 			sqlname=#{sqlname,jdbcType=VARCHAR},
+ 			update_man=#{update_man,jdbcType=VARCHAR},
+ 			update_time=now()
+ 		where id = #{id}
+ 	</update>
+ 	
+ 	<select id="findById" resultMap="base" parameterType="ShuJu_pz">
+ 		select * from SOURCES_PZ
+ 		where id=#{id}
+ 	</select>
+ 	
+ 	<select id="findByname" resultMap="base" >
+ 		select * from SOURCES_PZ
+ 	</select>
+ 	<select id="findByParmvalue" resultMap="base" >
+ 		select * from SOURCES_PZ where s_name=#{parmvalue}
+ 	</select>
+ 	<select id="findBysql" resultMap="base" parameterType="ShuJu_pz">
+ 		select t.*,c.mx_sql,c.caijibz from SOURCES_PZ t right join caiji_pz c on t.id=c.date_sources 
+ 		<if test="id!=null and id!=''">
+ 			 where c.id=#{id}
+ 		</if>
+ 	</select>
+ 	
+ 	<select id="findBysql1" resultMap="base" parameterType="ShuJu_pz">
+ 		select t.*,c.mx_sql,c.caijibz from SOURCES_PZ t right join upload_pz c on t.id=c.date_sources 
+ 		<if test="id!=null and id!=''">
+ 			 where c.id=#{id}
+ 		</if>
+ 	</select>
+ 	
+ 	<delete id="deletelist" parameterType="java.lang.String">
+ 		delete from SOURCES_PZ where id in (
+ 		<foreach item="o" collection="list" open="" separator="," close="" >
+				#{o}
+		</foreach>
+ 		)
+ 	</delete>
+</mapper>

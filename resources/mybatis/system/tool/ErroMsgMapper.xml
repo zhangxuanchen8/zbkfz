@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.system.tool.ErroMsgDao">
+	<resultMap id="base" type="ErroMsg">
+	</resultMap>
+	<resultMap id="LoginLog" type="LoginLog" ></resultMap>
+    <resultMap id="ZNodes" type="com.ehinfo.hr.common.utils.tree.entity.ZNodes"></resultMap>
+    <select id="getErroMsg" resultMap="base" parameterType ="java.util.List" >
+		<foreach item="o" collection="list" open="" separator="union" close="" >
+				select #{o.erroid} as erroid,#{o.erromsg} as erromsg,#{o.checkvalue} as checkvalue,#{o.hosnum} as hosnum from hr_employee t 
+				where ${o.checkfield}=#{o.checkvalue} and t.hosnum=#{o.hosnum}
+		</foreach>
+	</select>
+	<select id="getErroMsg2" resultMap="base" parameterType ="java.util.List" >
+		<foreach item="o" collection="list" open="" separator="union" close="" >
+				select #{o.erroid} as erroid,#{o.erromsg} as erromsg,#{o.checkvalue} as checkvalue ,t.id as returnvalue,#{o.hosnum} as hosnum from BAS_DEPT t 
+				where t.name = #{o.checkvalue} and t.hosnum = #{o.hosnum}
+		</foreach>
+	</select>
+</mapper>

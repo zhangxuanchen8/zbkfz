@@ -1,0 +1,432 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.system.org.OrgDao">
+	<!-- com.ehinfo.hr.entity.system.org.Org -->
+	<!-- com.ehinfo.hr.entity.system.org.Role -->
+    <resultMap id="base" type="BaseOrg"></resultMap>
+    <resultMap id="role" type="BaseRole"></resultMap>
+    <resultMap id="BasDept" type="BasDept"></resultMap>
+    <resultMap id="basedict" type="com.ehinfo.hr.entity.system.dict.BaseDict"></resultMap>
+     <resultMap id="baseChild" type="BaseOrg">
+     	  <collection property="orgs" column="childId"  ofType="baseChild" select="getChildOrg"/> 
+     	  <collection property="roles" column="childId" ofType="role" select="getChildRole"/> 
+     </resultMap>
+    <resultMap id="ZNodes" type="com.ehinfo.hr.common.utils.tree.entity.ZNodes"></resultMap>
+    <resultMap id="ZNodes_WorkKind" type="com.ehinfo.hr.common.utils.tree.entity.ZNodes_WorkKind"></resultMap>
+    <select id="find"  resultMap="base" parameterType="BaseOrg">
+       SELECT t.*,t.name as pName FROM bas_dept t 
+       WHERE 1=1 
+       <if test="id != null and id!='' ">
+        	AND t.id=#{id}
+       </if>
+       <if test="pId != null and pId!='' ">
+        	AND t.pId=#{pId}
+       </if>
+      ORDER BY cast(t.organizeno as unsigned int ) asc
+    </select> 
+    <select id="findByPage"  resultMap="base" parameterType="BaseOrg">
+       SELECT t.* FROM jy_base_org t WHERE 1=1
+        ORDER BY t.createTime
+    </select>  
+    <select id="count"  resultType="int" parameterType="BaseOrg">
+       SELECT count(*) FROM jy_base_role t WHERE 1=1 
+    </select>      
+    <select id="findmaxid"  resultType="int" >
+       select max(cast(id as unsigned int)) from bas_dept	
+    </select>      
+    <insert id="insert"  parameterType="BaseOrg">	
+ 	<![CDATA[
+	INSERT INTO bas_dept(id,pId,name,kq_deptid,isValid,description,createTime,hosnum,distcode,orgtype,empnumber,beds,address,tel,degreelevel,organizeno,isleaf,isdept,clinicaltype,depttype,shortname,contact,his_deptid,coefficient,his_type) 
+	VALUES (
+	#{id,jdbcType=VARCHAR},
+	#{pId,jdbcType=VARCHAR},
+	#{name,jdbcType=VARCHAR},
+	#{kq_deptid,jdbcType=VARCHAR},
+	'1',
+	#{description,jdbcType=VARCHAR},
+	sysdate(),
+	#{hosnum,jdbcType=VARCHAR},
+	#{distcode,jdbcType=VARCHAR},
+	#{orgtype,jdbcType=VARCHAR},
+	#{empnumber,jdbcType=NUMERIC},
+	#{beds,jdbcType=NUMERIC},
+	#{address,jdbcType=VARCHAR},
+	#{tel,jdbcType=VARCHAR},
+	#{degreelevel,jdbcType=VARCHAR},
+	#{organizeno,jdbcType=VARCHAR},
+	#{isleaf,jdbcType=VARCHAR},
+	#{isleaf,jdbcType=VARCHAR},
+	#{clinicaltype,jdbcType=VARCHAR},
+	#{depttype,jdbcType=VARCHAR},
+	#{shortname,jdbcType=VARCHAR},
+	#{contact,jdbcType=VARCHAR},
+	#{his_deptid,jdbcType=VARCHAR},
+	#{coefficient,jdbcType=NUMERIC},
+	#{his_type,jdbcType=VARCHAR}
+	)
+	]]>  
+	</insert>
+	<delete id="delete" parameterType="BaseOrg">
+	DELETE FROM bas_dept  
+	WHERE id=#{id} 
+	</delete>
+	<delete id="deleteBatch" parameterType="java.util.List">
+	DELETE from jy_base_org 
+	WHERE id in(
+		<foreach item="o" collection="list" open="" separator="," close="" >
+			#{o.id}
+		</foreach>
+		)
+	</delete>
+	<update id="update" parameterType="BaseOrg">
+		UPDATE bas_dept 
+		SET name=#{name,jdbcType=VARCHAR},
+		    clinicaltype=#{clinicaltype,jdbcType=VARCHAR},
+		    depttype=#{depttype,jdbcType=VARCHAR},
+		    organizeno=#{organizeno,jdbcType=VARCHAR},
+		    shortname=#{shortname,jdbcType=VARCHAR},
+		    contact=#{contact,jdbcType=VARCHAR},
+		    isleaf=#{isleaf,jdbcType=VARCHAR},
+		    isdept=#{isleaf,jdbcType=VARCHAR},
+		    tel=#{tel,jdbcType=VARCHAR},
+			description=#{description,jdbcType=VARCHAR},
+			kq_deptid = #{kq_deptid,jdbcType=VARCHAR},
+			his_deptid=#{his_deptid,jdbcType=VARCHAR},
+			coefficient=#{coefficient,jdbcType=NUMERIC},
+			his_type=#{his_type,jdbcType=VARCHAR}
+		WHERE id=#{id,jdbcType=VARCHAR}
+	</update>	
+	
+	<select id="findById" resultMap="base" parameterType="BaseOrg">
+		select * from bas_dept where id = #{id,jdbcType=VARCHAR}
+	</select>
+	
+	<!-- 机构树 -->
+	<select id="getOrgTreeWithUser" resultMap="ZNodes" parameterType="String">
+<!-- 	select * from (
+	SELECT t.id as id, t.name, t.pid as pid, t.hosnum, '' p_id , '' p_no
+	  FROM bas_dept t
+	 where 1 = 1
+	 <if test="hosnum != 0000 ">
+	   and t.hosnum in (select hosnum from(
+      	 			with cs (hosnum,SUPUNIT,hosname) as (
+      					select hosnum,SUPUNIT,hosname  from bas_hospitals where SUPUNIT = #{hosnum}
+      					union all
+      					select  e.hosnum,e.SUPUNIT,e.hosname  from cs t, bas_hospitals e where t.hosnum = e.SUPUNIT
+					)select * from cs
+      				union all select hosnum,SUPUNIT,hosname  from bas_hospitals where hosnum = #{hosnum}))
+	</if>
+	union all
+	select a.p_id as id, a.p_no||'   '||a.c_name name, a.departmentid as pid, a.hosnum, a.p_id , a.p_no
+	  from hr_employee a
+	  where 1=1
+	<if test="hosnum != 0000 ">
+	   and a.hosnum in (select hosnum from(
+      	 			with cs (hosnum,SUPUNIT,hosname) as (
+      					select hosnum,SUPUNIT,hosname  from bas_hospitals where SUPUNIT = #{hosnum}
+      					union all
+      					select  e.hosnum,e.SUPUNIT,e.hosname  from cs t, bas_hospitals e where t.hosnum = e.SUPUNIT
+					)select * from cs
+      				union all select hosnum,SUPUNIT,hosname  from bas_hospitals where hosnum = #{hosnum}))
+	</if>
+	) b
+       ORDER BY hosnum,b.name,b.id -->
+       
+       select * from (
+SELECT t.id as id, t.name, t.pid as pid, t.hosnum, '' p_id, '' p_no
+          FROM bas_dept t
+         where 1 = 1
+         	 <if test="hosnum != 0000 ">
+           and t.hosnum in (SELECT t.hosnum FROM bas_hospitals t START WITH t.hosnum = #{hosnum} CONNECT BY PRIOR t.hosnum = t.supunit)
+           </if>
+            order by id)
+        union all
+        select * from (
+        select a.p_id as id,
+               a.p_no || ' ' || a.c_name name,
+               a.departmentid as pid,
+               a.hosnum,
+               a.p_id,
+               a.p_no
+          from hr_employee a
+         where 1 = 1
+       	 <if test="hosnum != 0000 ">
+           and a.hosnum in (SELECT t.hosnum FROM bas_hospitals t START WITH t.hosnum = #{hosnum} CONNECT BY PRIOR t.hosnum = t.supunit)
+           </if>
+           order by name)
+    </select> 
+    <!-- 退休人员审批 -->
+	<select id="getEntryWithUser" resultMap="ZNodes" parameterType="String">
+	select * from (
+	SELECT t.id as id, t.name, t.pid as pid, t.hosnum, '' p_id , '' p_no
+	  FROM bas_dept t
+	 where 1 = 1
+	 <if test="hosnum != 0000 ">
+	   and t.hosnum = #{hosnum}
+	</if>
+	union all
+	select '' as id,a.c_name name, a.departmentid as pid, a.hosnum, a.p_id , a.p_no
+	  from hr_employee a
+	  where 1=1
+	  and p_status='退休'
+	<if test="hosnum != 0000 ">
+	   and a.hosnum = #{hosnum}
+	</if>
+	) b
+       ORDER BY b.id,b.name
+    </select> 
+	<!-- 机构树 -->
+	<select id="getOrgTree" resultMap="ZNodes" parameterType="String">
+  	SELECT t.id,t.pid,t.hosnum,t.name,t.organizeno,t.pnum FROM BAS_DEPT t left join bas_hospitals p on p.hosnum = t.hosnum WHERE 1=1 
+       and t.hosnum in(SELECT t.hosnum FROM bas_hospitals t 
+		where FIND_IN_SET(t.hosnum,(select getChildList_hos(#{hosnum})))>0
+       )
+ </select> 
+<select id="findByHosnum" resultMap="ZNodes" parameterType="BaseOrg">
+		 select id, pid,hosnum,name  from bas_dept where hosnum = #{hosnum} and (ishospital!='Y' or ishospital is null)
+	</select>
+	<!-- 字典树 -->
+	<select id="getDictSysname" resultMap="ZNodes" parameterType="String">
+		select distinct(sysname) as name from bas_dicts t where t.nevalue='!' 
+	  		 and t.hosnum = #{hosnum} or t.hosnum='0000'
+		order by t.sysname
+	</select >
+	<select id="getDictSysnameNode" resultMap="ZNodes" parameterType="String">
+		select t.dictid as id ,t.contents as name,t.nekey  from bas_dicts t
+			where 1=1
+			 and t.nevalue='!' 
+		<if test="sysname != '' ">
+			and t.sysname= #{sysname}
+		</if>	 
+		order by t.nekey
+	</select>
+	<select id="getDatadictTree" resultMap="ZNodes" parameterType="String">
+	SELECT t.treeid as id, t.name, t.treepid as pid, t.hosnum
+	  FROM JY_DATA_DICT t
+	 where 1 = 1
+	 <if test="hosnum != 0000 ">
+	   and t.hosnum = #{hosnum}
+	</if>
+       ORDER BY t.id,t.name
+    </select> 
+    
+	<select id="getWorkKindTree" resultMap="ZNodes_WorkKind" parameterType="String">
+	SELECT t.id as id, t.name, t.pid as pid
+	  FROM hr_work_kind t
+	 where 1 = 1
+	 and pid like #{pid}||'%'
+       ORDER BY t.id,t.name
+    </select> 
+    
+    <select id="gethosname" resultMap="ZNodes_WorkKind" parameterType="String">
+	SELECT t.hosnum as id, t.name, t.pid as pid,'true' as isparent
+	  FROM bas_dept t
+	 where 1 = 1
+	 and pid ='1' 
+        union select loginname as id ,name as name,hosnum as pid,'false' as isparent from jy_base_account
+    </select> 
+	<!-- 取当前最大hosnum -->
+	<select id="getmaxhosnum" resultType="String" parameterType="String">
+       SELECT max(cast(t.hosnum as unsigned int )) 	FROM bas_dept t
+    </select> 
+    <!-- 上级机构树 -->
+    <select id="getPreOrgTree" resultMap="ZNodes" parameterType="String">
+       SELECT t.id as id,
+	   		  t.name as name,
+	   		  t.pid as pid
+	   FROM bas_dept t
+	   WHERE t.pID=0 
+       ORDER BY t.id,t.name
+    </select> 
+    <!-- 权限列表包含按钮 -->
+    <select id="listAuthorized" resultMap="ZNodes" parameterType="String">    		
+      SELECT jbre.id as id,
+	   		jbre.name as name,
+	   		jbre.parentId as pId,
+			(CASE WHEN jbor.org_id IS NOT NULL THEN 'true' 
+				  ELSE '' END) as checked,
+			(CASE WHEN jbre.isValid=1 and jbor.org_id IS NOT NULL THEN 'true' 
+				  ELSE '' END) as open,
+			(CASE WHEN jbre.isValid!=1 THEN 'true' 
+				  ELSE '' END) as chkDisabled
+	 FROM JY_BASE_RESOURCES jbre
+	 LEFT JOIN (SELECT t.org_Id,t.resources_id from jy_base_org_resources t 
+	  			WHERE t.org_id=#{orgId}) jbor
+	 ON jbor.resources_id=jbre.id
+	 WHERE jbre.layer=#{layer}
+     ORDER BY jbre.parentId,jbre.type,jbre.sort
+    </select>
+      <!-- 权限列表包含按钮带门限 -->
+    <select id="listAuthorizedByTh" resultMap="ZNodes" parameterType="String">    		
+      SELECT jbre.id as id,
+	   		jbre.name as name,
+	   		jbre.parentId as pId,
+			(CASE WHEN jbor.th_org_Id IS NOT NULL AND jbor.org_id IS NOT NULL THEN 'true' 
+				  ELSE '' END) as checked,
+			(CASE WHEN jbre.isValid=1 and jbor.th_org_Id IS NOT NULL AND jbor.org_id IS NOT NULL THEN 'true' 
+				  ELSE '' END) as open,
+			(CASE WHEN jbre.isValid!=1 or jbor.th_org_Id IS NULL THEN 'true' 
+				  ELSE '' END) as chkDisabled
+	 FROM JY_BASE_RESOURCES jbre
+	 LEFT JOIN (SELECT thjbor.org_Id as th_org_Id,
+					   thjbor.resources_id as resources_id,
+					   tjbor.org_Id as org_Id
+					   FROM jy_base_org_resources thjbor
+					   LEFT JOIN  (SELECT t.org_Id,t.resources_id FROM jy_base_org_resources t where t.org_id=#{orgId}) tjbor
+					   ON thjbor.resources_id=tjbor.resources_id
+					   WHERE thjbor.org_Id=#{pId}) jbor
+	 ON jbor.resources_id=jbre.id
+	 WHERE jbre.layer=#{layer}
+     ORDER BY jbre.parentId,jbre.type,jbre.sort
+    </select>
+    <delete id="delAuthorizedByOrgId" parameterType="String">
+		DELETE FROM jy_base_org_resources 
+		WHERE org_Id=#{orgId} 
+	</delete>
+	 <delete id="delAuthorizedByOrgIdAndLayer" parameterType="String">
+		DELETE FROM jy_base_org_resources 
+		WHERE org_Id=#{orgId} AND EXISTS (SELECT jbr.id FROM jy_base_resources jbr 
+										  WHERE resources_id=jbr.id AND jbr.layer=#{layer})
+	</delete>
+	<delete id="deleteBatchAuthorizedByOrgId" parameterType="java.util.List">
+	DELETE FROM jy_base_org_resources 
+	WHERE org_Id in(
+		<foreach item="o" collection="list" open="" separator="," close="" >
+			#{o.id}
+		</foreach>
+		)
+	</delete>
+	<select id="insertAuthorizedByOrgId" parameterType="java.util.List">
+                INSERT INTO jy_base_org_resources(org_id,resources_id)
+                <foreach collection="list"  item="o" separator="union all">
+                        (SELECT #{o.orgId},#{o.resourcesId} FROM DUAL)
+                </foreach>
+        </select>
+	
+	 <select id="getOrg"  resultMap="base" parameterType="String">
+       SELECT t.*,jbo.name as pName FROM jy_base_org t 
+       LEFT JOIN jy_base_org jbo 
+       ON jbo.id=t.pId
+       WHERE 1=1 
+       <if test="id != null and id!='' ">
+        	and t.id=#{id}
+       </if>
+    </select> 
+     <select id="findAndChild"  resultMap="baseChild" parameterType="String">
+       SELECT t.id,t.pId,t.id as childId,t.name  FROM bas_dept t 
+       WHERE t.pId=#{id} 
+    </select> 
+    <select id="getChildOrg"  resultMap="baseChild" parameterType="BaseOrg">
+       SELECT t.id,t.pId,t.id as childId,t.name FROM jy_base_org t 
+       WHERE t.pId=#{id}
+    </select> 
+    <select id="getChildRole"  resultMap="role" parameterType="BaseOrg">
+       SELECT t.id,t.orgId,t.name FROM jy_base_role t 
+       WHERE t.orgId=#{id}
+    </select>      
+     <select id="getNotAuthoByOrg"  resultType="String" parameterType="map">
+     SELECT jbor.resources_id FROM jy_base_org_resources jbor 
+     LEFT JOIN jy_base_resources jbr
+     ON jbr.id=jbor.resources_id 
+     WHERE jbor.resources_id NOT IN(
+		<foreach item="o" collection="resIds" open="" separator="," close="" >
+			#{o}
+		</foreach>
+		) AND jbor.org_Id=#{orgId} AND jbr.layer=#{layer}
+    </select> 
+    <delete id="delBatchAuthByOrg" parameterType="java.util.List">
+	DELETE FROM jy_base_org_resources 
+	WHERE 
+		<foreach item="o" collection="list" open="" separator=" or " close="" >
+			(resources_id=#{o.resourcesId} AND org_Id=#{o.orgId})
+		</foreach>	
+	</delete>
+	<delete id="delBatchAuthByRole" parameterType="java.util.List">
+	DELETE FROM jy_base_role_resources 
+	WHERE 
+		<foreach item="o" collection="list" open="" separator=" or " close="" >
+			(resources_id=#{o.resourcesId} AND role_id=#{o.roleId})
+		</foreach>	
+	</delete>
+	
+	<select id="checkHosnum" resultType="com.ehinfo.hr.entity.system.org.Org" parameterType="BaseOrg">
+		SELECT count(*) count FROM(SELECT * FROM bas_dept WHERE 1=1 AND hosnum = #{hosnum})
+	</select>
+	
+	<select id="findOrgByPage"  resultMap="base" parameterType="BaseOrg">
+       SELECT t.*,p.name as pName ,k.name as kq_dept FROM BAS_DEPT t left join BAS_DEPT p on t.pid = p.id left join BAS_DEPT k on t.kq_deptid = k.id WHERE 1=1 
+       and (t.ishospital is null or t.ishospital='')
+       <if test="param.hosnum != 0000 ">
+	   	and t.hosnum in(SELECT t.hosnum FROM bas_hospitals t 
+		where FiND_IN_SET(t.hosnum,(select getChildList_hos(#{param.hosnum})))>0
+	   	)
+	   </if>
+	   and t.pid =#{deptid}
+	   <if test="code!=null and code!=''">
+	     and t.name like '%'||#{code}||'%' 
+	   </if>
+		   ORDER BY cast(t.organizeno as unsigned int) asc
+    </select> 
+    <select id="getDeptTree" resultMap="ZNodes" parameterType="String">
+		SELECT t.id as id, t.name, t.pid as pid, t.hosnum, '' p_id  ,t.organizeno,t.pnum
+	  FROM bas_dept t
+	 where t.isleaf='N'
+	 <if test="hosnum != 0000 ">
+	and FIND_IN_SET(t.id,(select getChildList_bas(ct.id) from bas_dept ct where ct.hosnum=#{hosnum} and ct.ishospital='Y'))>0
+	</if>
+      ORDER BY t.pnum,t.organizeno
+    </select>
+    <select id="selectDict" resultMap="basedict" parameterType="int">
+    select * from bas_dicts t where t.hosnum = '1000' and t.nekey=${nekey} and t.nevalue != '!' order by t.nevalue asc
+    </select>
+    <select id="findmaxorganizeno"  resultType="String" >
+       select max(cast(organizeno as unsigned int)+1) from bas_dept
+    </select> 
+    
+     <select id="findByName"  resultMap="base" >
+       select t.* from bas_dept t where name=#{name} and hosnum=#{hosnum}
+    </select> 
+    <update id="updatePnum">
+   		update bas_dept set 
+		pnum=#{pnum}
+		where id=#{id}
+</update>
+<select id="findLeafDeptByHosnum" resultMap="base">
+select t.*,k.name as kq_dept from bas_dept t left join bas_dept k on t.kq_deptid = k.id where 1=1
+ and t.isleaf='Y'
+ and t.hosnum =#{hosnum}
+</select>
+<select id="findHospitalByHosnum" resultMap="base">
+select t.*,k.name as kq_dept from bas_dept t left join bas_dept k on t.kq_deptid = k.id where t.ishospital='Y' and t.hosnum =#{hosnum}
+</select>
+<select id="findDeptTreeByHosnum" resultMap="base">
+SELECT t.*,p.hosname as pName FROM BAS_DEPT t left join bas_hospitals p on p.hosnum = t.hosnum WHERE 1=1 
+         and t.ishospital is null
+       and t.hosnum in(SELECT t.hosnum FROM bas_hospitals t START WITH t.hosnum = #{hosnum} CONNECT BY PRIOR t.hosnum = t.supunit)
+</select>
+
+
+    <select id="getDeptTreeByid" resultMap="ZNodes" parameterType="String">
+	 SELECT t.id as id, t.name, t.pid as pid, t.hosnum, '' p_id  ,t.organizeno,t.pnum,t.isleaf,t.isdept
+	  FROM bas_dept t
+	 where 1=1
+	 <if test="hosnum != 0000 ">
+	  and  t.id in (select id from(
+	   				with ct (id, pid,hosnum,name) as (
+	    					select id, pid,hosnum,name  from bas_dept where pid in (select id from BAS_DEPT t where t.hosnum=#{hosnum} and ishospital='Y')
+	    						union all
+	    					select  e.id, e.pid,e.hosnum,e.name  from ct t, bas_dept e where t.id = e.pid
+						)
+						select * from ct
+					union all
+					select id, pid,hosnum,name from BAS_DEPT t where t.hosnum=#{hosnum} and ishospital='Y'
+			)
+	   )
+	</if>
+      ORDER BY t.name
+    </select>
+    <select id="getHISTree" resultMap="BasDept" parameterType="String">
+    	select t.deptcode as id,t.hosnum as hosnum,t.deptname as his_deptid
+    	from his_dept t where t.hosnum=#{hosnum}
+    </select>
+</mapper>

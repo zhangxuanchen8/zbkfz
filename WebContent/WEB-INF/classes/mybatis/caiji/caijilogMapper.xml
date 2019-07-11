@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.caiji.TongJi_logDao">
+ 	<resultMap id="base" type="TongJi_log" ></resultMap>
+ 	<select id="findByPage"  resultMap="base" parameterType="TongJi_log">
+ 		select * from TONGJI_LOG where 1=1
+ 		<if test="param.caiji_date1!=null and param.caiji_date1!=''">
+ 			and zxdate &gt;= date_format(#{param.caiji_date1},'%Y/%m/%d')
+ 		</if>
+ 		<if test="param.caiji_date2!=null and param.caiji_date2!=''">
+ 			and zxdate &lt;= date_format(#{param.caiji_date2},'%Y/%m/%d')
+ 		</if>
+ 		order by zxdate desc
+ 	</select>
+	<insert id="insert" >
+		insert into TONGJI_LOG (
+ 			id,tongjilx,tongjilb,zxren,zxdate,zxnum,sfcw,name
+ 		)
+ 		values(
+			#{id,jdbcType=VARCHAR},
+			#{tongjilx,jdbcType=VARCHAR},
+			#{tongjilb,jdbcType=VARCHAR},
+			#{zxren,jdbcType=VARCHAR},
+			now(),
+			#{zxnum,jdbcType=VARCHAR},
+			#{sfcw,jdbcType=VARCHAR},
+			#{name,jdbcType=VARCHAR}
+ 		)
+	</insert>
+	<select id="finddate" resultMap="base" parameterType="TongJi_log">
+		select t.*, t.rowid from TONGJI_LOG t where name=#{name} and date_format(caijidate,'%Y/%m/%d')=#{zxdate} and sfcw!='1'
+	</select>
+	
+</mapper>

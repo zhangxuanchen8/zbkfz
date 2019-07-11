@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiaoku.zhibiaokuDao">
+    <resultMap id="base" type="zhibiaoku"></resultMap> 
+    <resultMap id="ZNodes" type="com.ehinfo.hr.common.utils.tree.entity.ZNodes"></resultMap>
+
+    <select id="findzbktype" resultMap="base">
+    	select * from zhibiaoku where hosnum=#{hosnum} and isuse='Y' order by zbkindex
+    </select>
+   	<select id="findByList" resultMap="base" parameterType="zhibiaoku">
+   		select * from zhibiaoku where 1=1 and hosnum=#{zbk.hosnum}
+   		<if test="zbk.zbktype!=null and zbk.zbktype!=''">
+   			and zbktype=#{zbk.zbktype}
+   		</if>
+   		<if test="zbk.zbkname!=null and zbk.zbkname!=''">
+   			and zbkname like '%${zbk.zbkname}%'
+   		</if>
+   		and (zbkdelete!='Y' or zbkdelete is null)
+   		order by zbkindex
+   	</select>
+   	<select id="findById" resultMap="base" parameterType="zhibiaoku">
+   		select * from zhibiaoku where id=#{id}
+   	</select>
+   	<insert id="insert" parameterType="zhibiaoku">
+   		insert into zhibiaoku(id,hosnum,zbksource,zbktype,zbkname,isuse,isshow,zbkindex,deptid,compute,gather_grade,compute_grade,zbktypeid,ziduan,his_deptid)
+   		values(
+   		#{id,jdbcType=VARCHAR},
+   		#{hosnum,jdbcType=VARCHAR},
+   		#{zbksource,jdbcType=VARCHAR},
+   		#{zbktype,jdbcType=VARCHAR},
+   		#{zbkname,jdbcType=VARCHAR},
+   		#{isuse,jdbcType=VARCHAR},
+   		#{isshow,jdbcType=VARCHAR},
+   		#{zbkindex,jdbcType=INTEGER},
+   		#{deptid,jdbcType=VARCHAR},
+   		#{compute,jdbcType=VARCHAR},
+   		#{gather_grade,jdbcType=VARCHAR},
+		#{compute_grade,jdbcType=VARCHAR},
+   		#{zbktypeid,jdbcType=VARCHAR},
+   		#{ziduan,jdbcType=VARCHAR},
+   		#{his_deptid,jdbcType=VARCHAR}
+   		)
+   	</insert>
+   	<update id="update" parameterType="zhibiaoku">
+   	update zhibiaoku set
+   		hosnum=#{hosnum,jdbcType=VARCHAR},
+		zbksource=#{zbksource,jdbcType=VARCHAR},
+   		zbktype=#{zbktype,jdbcType=VARCHAR},
+   		zbkname=#{zbkname,jdbcType=VARCHAR},
+   		isuse=#{isuse,jdbcType=VARCHAR},
+   		isshow=#{isshow,jdbcType=VARCHAR},
+   		zbkindex=#{zbkindex,jdbcType=INTEGER},
+   		deptid=#{deptid,jdbcType=VARCHAR},
+   		compute=#{compute,jdbcType=VARCHAR},
+   		gather_grade=#{gather_grade,jdbcType=VARCHAR},
+		compute_grade=#{compute_grade,jdbcType=VARCHAR},
+   		zbktypeid=#{zbktypeid,jdbcType=VARCHAR},
+   		ziduan=#{ziduan,jdbcType=VARCHAR},
+   		his_deptid=#{his_deptid,jdbcType=VARCHAR}
+   	where id=#{id}
+   	</update>
+   	<delete id="deleteBatch" parameterType="java.util.List">
+   		delete from zhibiaoku where id in(
+   		<foreach item="o" collection="list" open="" separator="," close="" >
+   		#{o.id}
+   		</foreach>
+   		)
+   	</delete>
+   	<update id="softdelete" parameterType="java.util.List">
+   		update zhibiaoku set zbkdelete='Y'
+   		where id in(
+   		<foreach collection="list" item="l" open="" separator="," close="">
+			#{l.id}   		
+   		</foreach>
+   		)
+   	</update>
+<!--   	查看一个医院下的option是否已经被使用  -->
+	<select id="isUseOption" resultType="String" parameterType="String">
+		select ziduan from zhibiaoku where hosnum=#{hosnum} and (zbkdelete!='Y' or zbkdelete is null)
+	</select>
+	
+	<select id="findzbkcj"  resultMap="base" parameterType="String">
+		select * from zhibiaoku where isuse='Y' and zbksource='数据采集' 
+		
+		<if test="hosnum != null and hosnum != ''">
+			and (hosnum=#{hosnum} or hosnum='0000') 
+		</if>
+		<if test="name!=null and name!=''">
+   			and zbkname=#{name} 
+   		</if>
+		
+		order by zbkindex
+	</select>
+</mapper>

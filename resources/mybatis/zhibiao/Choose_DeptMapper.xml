@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiao.Choose_DeptDao">
+ 	<resultMap id="base" type="Choose_Dept" ></resultMap>
+ 	
+ 	 <select id="findByPage" resultMap="base" parameterType="zhibiao_sb">
+        select t.*, a.hosname
+          from choose_dept t
+     left join bas_hospitals a
+            on t.hosnum = a.hosnum
+         where 1 = 1
+ 		<if test="param.hosnum!=null and param.hosnum!=''">
+ 			 and t.hosnum=#{param.hosnum}
+ 		</if>
+ 		<if test="param.z_name!=null and param.z_name!=''">
+ 		   and  t.z_name LIKE CONCAT('%','${param.z_name}','%' )
+     	</if>
+     	  ORDER BY t.index_no,t.z_name
+ 	</select>
+ 	
+	<insert id="insert" parameterType="Choose_Dept">
+		insert into choose_dept (key_id,hosnum,z_name,g_dept,create_time,remark,index_no) 
+	  values (
+	   #{key_id,jdbcType=VARCHAR},
+	   #{hosnum,jdbcType=VARCHAR},
+	   #{z_name,jdbcType=VARCHAR},
+	   #{g_dept,jdbcType=VARCHAR},
+	   sysdate(),
+	   #{remark,jdbcType=VARCHAR},
+	   #{index_no,jdbcType=VARCHAR}
+	  )
+	</insert>
+	
+	<update id="update" parameterType="Choose_Dept">
+		UPDATE choose_dept 
+		SET z_name=#{z_name,jdbcType=VARCHAR},
+		    g_dept=#{g_dept,jdbcType=VARCHAR},
+		    remark=#{remark,jdbcType=VARCHAR},
+		    index_no=#{index_no,jdbcType=VARCHAR},
+		    create_time=sysdate()
+		WHERE 
+			key_id=#{key_id,jdbcType=VARCHAR}
+	</update>
+	
+	<delete id="deleteDept" parameterType="Choose_Dept">
+	   delete from choose_dept where key_id = #{key_id}
+	</delete>
+	
+	<select id="findById" resultMap="base" parameterType="Choose_Dept">
+		select t.*,a.hosname
+		  from choose_dept t
+	 left join bas_hospitals a
+            on t.hosnum = a.hosnum
+		 where t.key_id = #{key_id} 
+		   and t.hosnum=#{hosnum}
+	</select>
+	
+	
+	<select id="checkZ_name" resultType="java.lang.Integer" parameterType="Choose_Dept">
+	   select count(1) from choose_dept where z_name=#{z_name} and hosnum=#{hosnum}
+	</select>
+	
+	
+	
+	<select id="getZhiBiaoGroupTree" resultMap="base" parameterType="Choose_Dept">
+        select t.*, a.hosname
+          from choose_dept t
+     left join bas_hospitals a
+            on t.hosnum = a.hosnum
+         where t.hosnum=#{param.hosnum}
+      order by t.index_no,t.z_name
+ 	</select>
+</mapper>

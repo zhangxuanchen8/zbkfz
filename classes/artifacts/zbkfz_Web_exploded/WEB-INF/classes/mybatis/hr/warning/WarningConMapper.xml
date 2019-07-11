@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.hr.warning.WarningConDao">
+ 	<resultMap id="base" type="WarningCon" ></resultMap>
+ 
+ 	<select id="findByPage" resultMap="base">
+ 		select * from hr_warning_Con where id = #{id}
+ 	</select>
+ 	
+ 	<select id="findById" resultMap="base">
+ 		select * from hr_warning_Con where id = #{id}
+ 	</select>
+ 	
+ 	<select id="findByPid" resultMap="base">
+ 		select * from hr_warning_Con where warn_id = #{id} and valid='Y'
+ 	</select>
+ 	<select id="fondGroup" resultMap="base">
+	 	select ss.*,ww.*,ww.FORWARD_ROLE as warn_role from (
+	 		select t.warn_type, t.warn_name,t.warn_id, count(t.forwardid) as counts
+			  from HR_WARNING_CON t
+			  left join HR_employee p
+			    on t.forwardid = p.p_id 
+			  left join hr_warning  s
+			   	on t.warn_id = s.id 
+			 where t.valid='Y' and t.warn_status in ('Y','W') AND 
+			  t.warn_role in (SELECT hh.role_id  FROM BAS_USER_DEPT_ROLE_RELATION hh WHERE 1=1 and hh.user_id=#{id}) and
+			  p.hosnum in(
+			       select hosnum from(
+			          with cs (hosnum,SUPUNIT,hosname) as (
+			                select hosnum,SUPUNIT,hosname  from bas_hospitals where SUPUNIT = #{hosnum}
+			                union all
+			                select  e.hosnum,e.SUPUNIT,e.hosname  from cs t, bas_hospitals e where t.hosnum = e.SUPUNIT
+			          )select * from cs
+			              union all select hosnum,SUPUNIT,hosname  from bas_hospitals where hosnum = #{hosnum}
+			         )
+			 )
+			 group by t.warn_type, t.warn_name,warn_id
+		) ss left join hr_warning ww  on ss.warn_id=ww.id    order by ww.num
+ 	</select>
+ 	<update id="updateStatus" parameterType="WarningCon">
+ 		update hr_warning_Con set warn_status=#{warn_status} where id=#{id}
+ 	</update>
+ 	
+ 	<insert id="insert" parameterType="WarningCon">
+ 		insert into hr_warning_Con (
+			id,
+			warn_id,
+			warn_forward,
+			warn_role,
+			warn_type,
+			warn_name,
+			warn_status,
+			warn_get_time,
+			forwardid,
+			valid
+ 		) values(
+			#{id},
+			#{warn_id,jdbcType=VARCHAR},
+			#{warn_forward,jdbcType=VARCHAR},
+			#{warn_role,jdbcType=VARCHAR},
+			#{warn_type,jdbcType=VARCHAR},
+			#{warn_name,jdbcType=VARCHAR},
+			#{warn_status,jdbcType=VARCHAR},
+			sysdate,
+			#{forwardid,jdbcType=VARCHAR},
+			#{valid,jdbcType=VARCHAR}
+			
+ 		)
+ 	</insert>
+ 	
+ 	<update id="update"  parameterType="WarningCon">
+ 		update hr_warning_Con set 
+			id=#{id},
+			warn_id=#{warn_id,jdbcType=VARCHAR},
+			warn_forward=#{warn_forward,jdbcType=VARCHAR},
+			warn_role=#{warn_role,jdbcType=VARCHAR},
+			warn_type=#{warn_type,jdbcType=VARCHAR},
+			warn_name=#{warn_name,jdbcType=VARCHAR},
+			warn_status=#{warn_status,jdbcType=VARCHAR},
+			<!-- warn_get_time=sysdate, -->
+			forwardid = #{forwardid,jdbcType=VARCHAR},
+			valid = #{valid,jdbcType=VARCHAR}
+		where id = #{id}
+ 	</update>
+ 	<delete id="delete"  parameterType="WarningCon">
+ 		delete from hr_warning_Con where  id = #{id}
+ 	</delete>
+ 	
+	
+    <delete id="deleteBatch" parameterType ="java.util.List">
+   		delete from hr_warning_Con WHERE id in(
+		<foreach item="o" collection="list" open="" separator="," close="" >
+			#{o.id}
+		</foreach>
+		)
+	</delete>
+	
+	
+	<delete id="deleteByNameId" parameterType ="WarningCon">
+		delete from hr_warning_Con WHERE warn_name = #{warn_name} and forwardid=#{forwardid}
+	</delete>
+	
+	<select id="findByNameId" resultMap="base">
+ 		select * from hr_warning_Con where warn_name = #{warn_name} and forwardid=#{forwardid}
+ 	</select>
+ 	
+ 	<update id="updateByNameId"  parameterType="WarningCon">
+ 		update hr_warning_Con set 
+			warn_status=#{warn_status}
+		where warn_name = #{warn_name} and forwardid=#{forwardid}
+ 	</update>
+</mapper>
+

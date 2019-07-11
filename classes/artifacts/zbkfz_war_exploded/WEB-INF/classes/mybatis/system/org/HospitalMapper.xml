@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.system.org.HospitalDao">
+<resultMap  id="base" type="BaseHospital"></resultMap>
+<resultMap  id="baseorg" type="BaseOrg"></resultMap>
+<resultMap id="basedict" type="com.ehinfo.hr.entity.system.dict.BaseDict"></resultMap>
+<select id="getHospitalTreeNodes" resultMap="base">
+	select t.hosnum,t.hosname,t.supunit from 
+	Bas_hospitals t
+	 order by t.hosnum
+</select>
+<select id="findByPid"  resultMap="base">
+select * from Bas_hospitals 
+where FIND_IN_SET(hosnum,(select getChildList_hos(#{id})))>0
+ORDER BY organizeno
+</select>
+<select id="findHospitalByPage" resultMap="base" parameterType="BaseHospital">
+	select t.hosnum,t.nodetype,t.hosname,t.tel,t.address from
+	Bas_hospitals t 
+	where supunit=#{supunit} or hosnum=#{supunit}
+	<if test="code!=null and code!=''">
+	and (t.hosname like  concat('%',#{code},'%'))
+	</if>
+	order by t.hosnum
+</select>
+<insert id="insert" parameterType="BaseHospital">
+<![CDATA[
+insert into bas_hospitals(HOSNUM,HOSNAME,DISTCODE,SUPUNIT,NODETYPE,HOSDEGREE,ORGTYPE,EMPNUMBER,BEDS,DOCTORS,NURSES,ADDRESS,TEL,INTRODUCTION,INPUTCPY,INPUTCWB,DEGREELEVEL,HOSDNAME,DEGREELNAME,SHORTNAME,ycentercode,ncentercode,organizeno,sydwfl,dwhyfl,jgdm,ygtlx,zzppdw,jgzxid)
+values(
+	#{hosnum,jdbcType=VARCHAR},
+	#{hosname,jdbcType=VARCHAR},
+	#{distcode,jdbcType=VARCHAR},
+	#{supunit,jdbcType=VARCHAR},
+	#{nodetype,jdbcType=VARCHAR},
+	#{hosdegree,jdbcType=VARCHAR},
+	#{orgtype,jdbcType=VARCHAR},
+	#{empnumber,jdbcType=NUMERIC},
+	#{beds,jdbcType=NUMERIC},
+	#{doctors,jdbcType=NUMERIC},
+	#{nurses,jdbcType=NUMERIC},
+	#{address,jdbcType=VARCHAR},
+	#{tel,jdbcType=VARCHAR},
+	#{introduction,jdbcType=VARCHAR},
+	#{inputcpy,jdbcType=VARCHAR},
+	#{inputcwb,jdbcType=VARCHAR},
+	#{degreelevel,jdbcType=VARCHAR},
+	#{hosdname,jdbcType=VARCHAR},
+	#{degreelname,jdbcType=VARCHAR},
+	#{shortname,jdbcType=VARCHAR},
+	#{ycentercode,jdbcType=VARCHAR},
+	#{ncentercode,jdbcType=VARCHAR},
+	#{organizeno,jdbcType=NUMERIC},
+	#{sydwfl,jdbcType=VARCHAR},
+	#{dwhyfl,jdbcType=VARCHAR},
+	#{jgdm,jdbcType=VARCHAR},
+	#{ygtlx,jdbcType=VARCHAR},
+	#{zzppdw,jdbcType=VARCHAR},
+	#{jgzxid,jdbcType=VARCHAR}
+	)
+]]> 
+</insert>
+<select id="find" resultMap="base" parameterType="BaseHospital">
+select * from bas_hospitals where 1=1
+<if test="hosnum!=null and hosnum!='' ">
+and hosnum = #{hosnum} 
+</if>
+</select>
+<update id="update" parameterType="BaseHospital">
+update bas_hospitals set 
+     HOSNUM=#{hosnum,jdbcType=VARCHAR},
+     HOSNAME=#{hosname,jdbcType=VARCHAR},
+     DISTCODE=#{distcode,jdbcType=VARCHAR},     
+	 NODETYPE=#{nodetype,jdbcType=VARCHAR}, 
+	 HOSDEGREE=#{hosdegree,jdbcType=VARCHAR}, 
+	 ORGTYPE=#{orgtype,jdbcType=VARCHAR},  
+	 EMPNUMBER=#{empnumber,jdbcType=NUMERIC},
+	 BEDS=#{beds,jdbcType=NUMERIC}, 
+	 DOCTORS=#{doctors,jdbcType=NUMERIC},  
+	 NURSES=#{nurses,jdbcType=NUMERIC},
+	 ADDRESS=#{address,jdbcType=VARCHAR},
+	 TEL=#{tel,jdbcType=VARCHAR},
+	 INTRODUCTION=#{introduction,jdbcType=VARCHAR},  
+	 INPUTCPY=#{inputcpy,jdbcType=VARCHAR}, 
+	 INPUTCWB=#{inputcwb,jdbcType=VARCHAR},
+	 DEGREELEVEL=#{degreelevel,jdbcType=VARCHAR}, 
+	 HOSDNAME=#{hosdname,jdbcType=VARCHAR}, 
+	 DEGREELNAME=#{degreelname,jdbcType=VARCHAR}, 
+	 SHORTNAME=#{shortname,jdbcType=VARCHAR},
+	 ycentercode=#{ycentercode,jdbcType=VARCHAR},
+	 ncentercode=#{ncentercode,jdbcType=VARCHAR},
+	 organizeno=#{organizeno,jdbcType=NUMERIC},
+	 sydwfl=#{sydwfl,jdbcType=VARCHAR},
+	 dwhyfl=#{dwhyfl,jdbcType=VARCHAR},
+	 jgdm=#{jgdm,jdbcType=VARCHAR},
+	 ygtlx=#{ygtlx,jdbcType=VARCHAR},
+	 zzppdw=#{zzppdw,jdbcType=VARCHAR},
+	 jgzxid=#{jgzxid,jdbcType=VARCHAR}  
+	 where 
+	 HOSNUM=#{hosnum,jdbcType=VARCHAR} 
+</update>
+<select id="findChild" resultMap="base" parameterType="String">
+select hosnum from Bas_hospitals where supunit = #{hosnum}
+</select>
+<delete id="delete" parameterType="BaseHospital">
+delete from bas_hospitals where hosnum=#{hosnum} 
+</delete>
+<select id="selectDict" resultMap="basedict" parameterType="BaseDict">
+    select * from bas_dicts t where t.hosnum = '0000' and t.nekey=${nekey} 
+    <if test="nevalue!=null and nevalue!=''">
+    and t.nevalue=#{nevalue}
+    </if>
+    and t.nevalue != '!' order by t.nevalue asc
+</select>
+<insert id="insertDept" parameterType="BaseHospital">
+insert into BAS_DEPT(hosnum,ishospital,deptcode,name,shortname,pid,isleaf,isdept,isdeleted,id,kq_deptid,pnum)
+values(#{hosnum,jdbcType=VARCHAR},
+		'Y',
+		#{hosnum,jdbcType=VARCHAR},
+	#{hosname,jdbcType=VARCHAR},
+	#{shortname,jdbcType=VARCHAR},
+	#{supunit,jdbcType=VARCHAR},
+	'N',
+	'N',
+	'N',
+	(select id from (select cast(max(id) as unsigned int)+1 as id from bas_dept) as a),
+	(select id from (select cast(max(id) as unsigned int)+1 as id from bas_dept) as a),
+	#{organizeno,jdbcType=NUMERIC}
+	)
+</insert>
+<select id="findParentDept" resultMap="baseorg" parameterType="BaseHospital">
+	select id from BAS_DEPT t where t.hosnum=#{supunit,jdbcType=VARCHAR} and ishospital='Y'
+</select>
+<update id="updateDept" parameterType="BaseHospital">
+update BAS_DEPT SET hosnum=#{hosnum,jdbcType=VARCHAR},deptcode=#{hosnum,jdbcType=VARCHAR},name=#{hosname,jdbcType=VARCHAR},shortname=#{shortname,jdbcType=VARCHAR} ,pnum=#{organizeno,jdbcType=NUMERIC} where 
+hosnum=#{hosnum,jdbcType=VARCHAR} and ishospital='Y'
+</update>
+<select id="findDept" resultMap="baseorg" parameterType="BaseHospital">
+select t.* from BAS_DEPT t where 
+hosnum=#{hosnum,jdbcType=VARCHAR}  and isdept='N'
+</select>
+<select id="findAndChild"  resultMap="baseorg" parameterType="String">
+       SELECT t.id,t.pId,t.id,t.name  FROM bas_dept t 
+       WHERE t.pId=#{id}
+</select>
+<delete id="deleteDept" parameterType="BaseOrg">
+	DELETE FROM bas_dept  
+	WHERE id=#{id} 
+</delete>
+<select id="findAllHospital" resultMap="base">
+select t.* from Bas_hospitals t where t.nodetype not in ('村卫生室区','村卫生室')
+</select>
+<select id="findById" resultMap="base">
+select t.* from Bas_hospitals t where hosnum = #{hosnum}
+</select>
+
+<select id="findByHosnum" resultMap="base">
+select t.hosname from Bas_hospitals t where hosnum = #{hosnum}
+</select>
+<select id="findByHosname" resultMap="base">
+select t.hosnum from Bas_hospitals t where hosname = #{hosname}
+</select>
+</mapper>

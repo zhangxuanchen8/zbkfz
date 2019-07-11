@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.system.user.CpUserDao">
+    <resultMap id="cpuser" type="CpUser"></resultMap> 
+    
+    <select id="findById" resultMap="cpuser" parameterType="String">
+      select t.* from CP_USER t where t.user_key=#{id} and del_sign !='1'
+    </select> 
+
+ 	<insert id="insert"  parameterType="CpUser">	
+ 		insert into cp_user(id,hosnum,user_key,password,name,idcard,user_id,scbj,del_sign) values(
+ 		#{id,jdbcType=VARCHAR},
+		#{hosnum,jdbcType=VARCHAR},
+		#{user_key,jdbcType=VARCHAR},
+		#{password,jdbcType=VARCHAR},
+		#{name,jdbcType=VARCHAR},
+		#{idcard,jdbcType=VARCHAR},
+		#{user_id,jdbcType=VARCHAR},
+		#{scbj,jdbcType=VARCHAR},
+		#{del_sign,jdbcType=VARCHAR}
+ 		)
+	</insert>
+	<update id="deleteBatch" parameterType ="java.util.List">
+	update cp_user set del_sign='Y' WHERE id in(
+		<foreach item="o" collection="list" open="" separator="," close="" >
+			#{o.id}
+		</foreach>
+		)
+	</update>
+	<update id="update" parameterType="CpUser">
+		update cp_user set
+			password=#{password}
+		where 
+			id=#{id}
+	</update>
+   <update id="updatebj" parameterType="CpUser">
+		update cp_user set
+			scbj=#{scbj}  
+		where 
+			 hosnum=#{hosnum}
+			 and user_id=#{user_id}
+	</update>
+	 <update id="updatesj" parameterType="CpUser">
+		update cp_user set
+ 			tjdate=#{tjdate}
+ 			, kqdate=#{kqdate}
+		where 
+			 hosnum=#{hosnum}
+			 AND user_id IN ( SELECT recordno FROM zc_personalrecord WHERE current_manage_unit = #{hosnum} AND ( guidang = '' OR guidang IS NULL ) )
+	</update>
+	<update id="updatesj1" parameterType="CpUser">
+		update cp_user set
+ 			kqdate=''
+		where 
+			 hosnum=#{hosnum}
+	</update>
+		<delete id="deletelist" parameterType="java.util.List">
+ 		delete from cp_user where user_id in
+		 	<foreach item="s" collection="slist" open="(" separator="," close=")">
+		 	#{s}
+		 	</foreach>
+ 	</delete>
+ 	
+ 	  <select id="findcpnums" resultMap="cpuser" parameterType="String">
+	SELECT
+	c.tjdate,
+	count( * ) as nums,
+	m.`name` as modelname,
+	if(m.shortname !='',m.shortname,m.`name`) as modelnames,
+	m.id as modelid
+FROM
+	cp_user c
+	LEFT JOIN new_ryzbk r ON r.recordno = c.user_id
+	LEFT JOIN model m ON m.id = r.pid and m.hosnum=#{hosnum}
+WHERE
+	<!-- c.tjdate > SYSDATE( )  -->
+	 c.scbj = 'N' 
+	and c.hosnum=#{hosnum}
+GROUP BY
+	c.tjdate,
+	m.NAME ORDER BY c.tjdate
+   		</select> 
+</mapper>

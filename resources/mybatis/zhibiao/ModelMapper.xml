@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiao.ModelDao">
+    <resultMap id="ZNodes" type="com.ehinfo.hr.common.utils.tree.entity.ZNodes"></resultMap>
+    <resultMap id="basemodel" type="model"></resultMap>
+    <!-- 防止密码外泄，取消密码列 -->
+    <select id="find" resultMap="basemodel" parameterType="model">
+       SELECT * FROM model t
+      WHERE 1=1 and name=#{name}  and t.hosnum = #{hosnum}
+    </select>
+
+    <select id="findById" resultMap="basemodel" parameterType="model">
+       SELECT * from model where 1=1 and id = #{param.id} and (del ='' or del is null)
+    </select>
+    
+
+    <select id="getAllRolesId" resultType="String" parameterType="model">
+       SELECT wm_concat(t.role_id) as roles FROM BAS_USER_DEPT_ROLE_RELATION t
+      WHERE 1=1 and t.user_id=#{id} and OFFICE_ID=#{person_dept}
+    </select>
+
+     <select id="findFormatByLoginName"  resultMap="basemodel" parameterType="String">
+    	<![CDATA[
+       SELECT a.*,s.name as dept_name,h.hosname as hosname,( SELECT wm_concat(ss.role_id) as roles FROM BAS_USER_DEPT_ROLE_RELATION ss
+      WHERE 1=1 and ss.user_id=a.id) as roles FROM bas_user a,bas_dept s ,BAS_HOSPITALS h WHERE 1=1
+       AND a.del_sign='N' and stop_Sign='N' and a.person_dept = s.id and h.hosnum = a.hosnum
+       AND a.JOB_NO=#{loginName}
+       ]]>
+    </select>
+    <!--  防止密码外泄，取消密码列 -->
+ 	<select id="findByPage"  resultMap="basemodel" parameterType="model">
+        select t.*,a.contents yqname, b.contents zblbname from model t left join bas_dicts a on a.nevalue = t.yq left join bas_dicts b on b.nevalue = t.zblb
+        where a.nekey = 101 and b.nekey = 103 and t.hosnum = #{param.hosnum} 
+        and  (del ='' or del is null) and a.hosnum in ('0000',#{param.hosnum}) and b.hosnum in ('0000',#{param.hosnum})
+        and	 (t.guidang ='' or t.guidang is null)
+        <if test="param.name != null and param.name !='' ">
+        and  t.name LIKE CONCAT('%','${param.name}','%' )
+       </if>
+        order by xh
+    </select>
+
+    <select id="findByPageDWZ"  resultMap="basemodel" parameterType="model">
+    select * from ( select b.*,d.name dept_name from bas_user b, bas_dept d
+       where b.person_dept = d.id and b.id = #{param.id}
+     union all
+      SELECT t.*,s.name as dept_name FROM bas_user t left join bas_dept s
+     	on t.person_dept = s.id
+      WHERE 1=1
+        <if test="param.name != null and param.name !='' ">
+        	AND t.name like  concat('%',#{param.name},'%')
+       </if>
+       and person_dept in
+       <foreach item="item" collection="list" open="("  separator="," close=")" >
+			'${item.person_dept}'
+		</foreach>
+       and stop_sign='N' and del_sign='N'
+      <!--  and t.hosnum=#{param.hosnum} -->
+      ) res  order by  res.hosnum , res.index_no , res.id
+    </select>
+
+    <insert id="insertRole"  parameterType="model">
+    	insert into BAS_USER_DEPT_ROLE_RELATION(user_id,office_id,role_id,hosnum) values(
+    		#{id,jdbcType=VARCHAR},
+			#{person_dept,jdbcType=VARCHAR},
+			#{roles,jdbcType=VARCHAR},
+			#{hosnum,jdbcType=VARCHAR}
+    	)
+    </insert>
+
+    <delete id="deleteRole"  parameterType="model">
+    	delete from  BAS_USER_DEPT_ROLE_RELATION where user_Id = #{id} and  office_id=#{person_dept}
+    </delete>
+
+ 		<insert id="insert"  parameterType="model">
+ 		insert into model (id,hosnum,name,zblb,yq,nodecode,shortname,xh,year) values(
+ 		#{id,jdbcType=VARCHAR},
+        #{hosnum,jdbcType=VARCHAR},
+        #{name,jdbcType=VARCHAR},
+        #{zblb,jdbcType=VARCHAR},
+        #{yq,jdbcType=VARCHAR},
+        #{nodecode,jdbcType=VARCHAR},
+        #{shortname,jdbcType=VARCHAR},
+        #{xh,jdbcType= NUMERIC },
+        date_format(sysdate(),'%Y')
+
+ 		)
+	</insert>
+	<update id="update"  parameterType="model">
+ 		update  model
+        SET name = #{name,jdbcType=VARCHAR},
+        zblb = #{zblb,jdbcType=VARCHAR},
+        yq = #{yq,jdbcType=VARCHAR},
+       nodecode = #{nodecode,jdbcType=VARCHAR},
+       shortname =  #{shortname,jdbcType=VARCHAR},
+        xh = #{xh,jdbcType= NUMERIC }
+ 		where id=#{id}
+	</update>
+	<delete id="delete" parameterType="model">
+	delete from model
+	WHERE id=#{id}
+	</delete>
+	<update id="deleteBatch" parameterType ="java.util.List">
+	update model set del='Y' WHERE id in(
+		<foreach item="o" collection="list" open="" separator="," close="" >
+			#{o.id}
+		</foreach>
+		)
+	</update>
+
+   <select id="findUserByRoleAndHos" resultMap="basemodel">
+<!--    select t.id,t.name,t.hosnum,e.hosname,t.mobile,t.sex from bas_user t left join bas_hospitals e on t.hosnum = e.hosnum where t.id in(
+   select a.user_id from BAS_USER_DEPT_ROLE_RELATION a left join BAS_ROLE b on a.role_id =b.id where b.name=#{rolename}
+    and a.hosnum in (select hosnum from bas_hospitals where hosnum=#{hosnum}  or hosnum = (select supunit from bas_hospitals where  hosnum=#{hosnum})))
+   ) -->
+
+   select t.id, t.name, t.hosnum, e.hosname, t.mobile, t.sex
+  from bas_user t
+  left join bas_hospitals e
+    on t.hosnum = e.hosnum
+ where t.id in (select a.user_id
+                  from BAS_USER_DEPT_ROLE_RELATION a
+                  left join BAS_ROLE b
+                    on a.role_id = b.id
+                 where b.name =#{rolename}
+                   and a.hosnum in (select hosnum from bas_hospitals where hosnum=#{hosnum} or hosnum = (select supunit from bas_hospitals where  hosnum=#{hosnum})))
+
+   </select>
+
+   <select id="getBasUserList" resultMap="basemodel" parameterType="model">
+       SELECT t.* FROM BAS_USER t where t.stop_sign='N' and t.del_sign='N'
+   </select>
+
+   <select id="findBasTree" resultMap="basemodel" parameterType="model">
+   		select t.hosnum , t.name dept_name, t.pid ehrrole from bas_dept t where 1 = 1
+   		<choose>
+        	<when test="id != '300000' and id !='0000'">
+            	and t.hosnum = #{id,jdbcType=VARCHAR}
+            </when>
+            <otherwise>
+            	and t.pid = '330000' or t.hosnum = '330000'
+            </otherwise>
+        </choose>
+ 		order by t.hosnum
+   </select>
+
+ <select id="getModelTree" resultMap="ZNodes" parameterType="String">
+      select a.id , a.zblb pid , a.name , a.hosnum , a.yq p_id  , a.xh from model a where  a.hosnum = #{hosnum} 
+      and a.id in (select t.i_id from sjzbk t )
+       and (del ='' or del is null)
+ 		and (guidang ='' or guidang is null)
+      order by xh
+
+    </select>
+
+    <select id="getModelTree_withzbk" resultMap="ZNodes" parameterType="String">
+select id , pid , name , hosnum , p_id from (
+      select a.id, 'zxc' pid,
+		concat(a.name,'(',z.contents,'-',x.contents,')')
+		 name, a.hosnum, a.yq p_id,a.xh
+        FROM model a left join bas_dicts z on z.nevalue = a.yq and z.nekey = 101 left join bas_dicts x on x.nevalue = a.zblb and x.nekey =103
+         where a.hosnum =#{hosnum} and	(guidang ='' or guidang is null)
+          <if test="nodecode != null and nodecode !='' ">
+        and a.id =#{nodecode}
+        </if>
+           and (del ='' or del is null) order by a.xh
+			)n
+        union all
+        select id , pid , name , hosnum , p_id from (
+        select b.i_id id, b.pid, b.item name, b.hosnum, '' p_id
+          from zbk b 
+         where hosnum =#{hosnum}
+         and (guidang ='' or guidang is null)
+          <if test="pid != null and pid !='' ">
+		AND FIND_IN_SET(b.I_ID,#{pid})>0
+		</if>
+          order by cast(b.xuhao as unsigned int)
+         ) m
+				 
+         union all
+         select 'zxc' id, '' pid , '量化指标模板' name , '' hosnum, '' p_id  from dual
+    </select>
+ 
+      <select id="getModelTree_withzbkdept" resultMap="ZNodes" parameterType="String">
+select id, pid, name, hosnum, p_id
+  from (select a.id,
+               'zxc' pid,
+             concat(a.name,'(',z.contents,'-',x.contents,')') name,
+               a.hosnum,
+               a.yq p_id,
+               a.xh
+          FROM model a
+          left join bas_dicts z
+            on z.nevalue = a.yq
+           and z.nekey = 101
+          left join bas_dicts x
+            on x.nevalue = a.zblb
+           and x.nekey =103
+         where a.hosnum = #{hosnum}
+           and (del ='' or del is null)
+           and (guidang ='' or guidang is null)
+         order by a.xh) n
+union all
+select 'zxc' id, '' pid, '量化指标模板' name, '' hosnum, '' p_id from dual
+    </select>
+ <select id="getModelTree_withPersonalRecords" resultMap="ZNodes" parameterType="String">
+ select id, pid, name, hosnum, p_id
+  from (select a.id,
+               'zxc' pid,
+                concat(a.name,'(',z.contents,'-',x.contents,')') name,
+               a.hosnum,
+               a.yq p_id
+          FROM model a
+          left join bas_dicts z
+            on z.nevalue = a.yq
+           and z.nekey = 101
+          left join bas_dicts x
+            on x.nevalue = a.zblb
+           and x.nekey =103
+         where a.id in (select s.id from model s where FIND_IN_SET(s.id,(#{hosnum}))>0 and (s.guidang ='' or s.guidang is null))
+        <!--  and a.id in (SELECT j.i_id FROM sjzbk j where j.synergy='Y') -->
+           and (del ='' or del is null)
+         order by xh) n
+
+union all
+select id, pid, name, hosnum, p_id
+  from (select c.recordno id,
+               b.pid,
+               concat( c.xm, '(', d.contents, ')' ) NAME,
+               c.unitid hosnum,
+               '' p_id
+          from NEW_RYZBK b
+          left join zc_personalrecord c
+            on c.recordno = b.recordno
+          left join zc_b_dictionary_u d
+            on d.nevalue = c.xcszy
+        
+         where d.nekey = 2
+         and b.pid in (select s.id from model s where FIND_IN_SET(s.id,(#{hosnum}))>0 and (s.guidang ='' or s.guidang is null))
+      <!--   and b.pid in (SELECT j.i_id FROM sjzbk j where j.synergy='Y')	 -->
+         order by c.xm) m
+
+union all
+select 'zxc' id, '' pid, '量化指标模板' name, '' hosnum, '' p_id from dual
+ 
+ </select>
+    <select id="getModelTree_withPersonalRecord" resultMap="ZNodes" parameterType="String">
+
+      select id, pid, name, hosnum, p_id
+          from (select a.id, 'zxc' pid, concat(a.name,'(',z.contents,'-',x.contents,')') name, a.hosnum, a.yq p_id
+        FROM model a left join bas_dicts z on z.nevalue = a.yq and z.nekey = 101 left join bas_dicts x on x.nevalue = a.zblb and x.nekey = 103
+                 where a.hosnum =#{hosnum}
+                   and (del ='' or del is null)
+                   and (a.guidang ='' or a.guidang is null)
+                 order by xh) n 
+
+        union all
+        select id, pid, name, hosnum, p_id
+          from (select c.recordno id,
+                       b.pid,
+                       	concat( c.xm, '(', d.contents, ')' ) NAME,
+                       c.unitid hosnum,
+                       '' p_id
+                  from NEW_RYZBK b
+                  left join zc_personalrecord c
+                    on c.recordno = b.recordno
+                    and (c.guidang ='' or c.guidang is null)
+                  left join zc_b_dictionary_u d
+                    on d.nevalue = c.xcszy
+           
+                 where b.unitid =#{hosnum}
+                  and d.nekey = 2
+                 order by c.xm) m
+        union all
+        select '88888888' id, 'zxc' pid, '未分配人员' name, '' hosnum, '' p_id
+          from dual
+        union all
+        select id , pid , name , hosnum , p_id from (
+        select e.recordno id, '88888888' pid, e.xm name, e.unitid hosnum, '' p_id
+          from zc_personalrecord e where e.current_manage_unit = #{hosnum}  
+           and e.recordno not in (select recordno from NEW_RYZBK)
+          order by e.xm
+          ) k
+        union all
+         select 'zxc' id, '' pid , '量化指标模板' name , '' hosnum, '' p_id  from dual
+    </select>
+
+    <select id="getPersonalRecordTree" resultMap="ZNodes" parameterType="String">
+            select a.recordno id,concat(a.xm,'(',d.contents,')',case when h.ygtlx='' then '' else concat('-',h.ygtlx) end,'(',IFNULL(c.name,''),')') name,'' pid from zc_personalrecord a left join new_ryzbk b on b.recordno = a.recordno left join model c on c.id = b.pid
+				  left join zc_b_dictionary_u d
+                    on d.nevalue =a.xcszy
+										and d.nekey='2'
+			left join bas_hospitals h on h.hosnum=a.unitid
+        where 1=1
+   		<if test="xcszy != null and xcszy !='' ">
+            AND a.xcszy = #{xcszy}
+        </if>
+        and a.current_manage_unit = #{hosnum} 
+       and (a.guidang ='' or a.guidang is null)
+        order by a.xcszy desc, a.xm asc
+    </select>
+    
+    <select id="getzbkPersonal" resultMap="ZNodes" parameterType="java.lang.String">
+        SELECT
+			a.recordno id,
+			concat(a.xm,'(',IFNULL(s.scorep,''),')') as name,
+			<!-- a.xm as name, -->
+			'0' pid 
+		FROM
+		zc_personalrecord a
+		LEFT JOIN new_ryzbk b ON b.recordno = a.recordno
+		LEFT JOIN model c ON c.id = b.pid
+			left join zbkscoress s on a.recordno = s.id and s.itemid = #{id}
+	WHERE
+		1 = 1 
+		AND a.current_manage_unit = #{hosnum} 
+		and c.id=#{pid}
+	ORDER BY
+		a.xcszy DESC,
+		a.xm ASC
+    </select>
+    
+   <select id="findbyyear"  resultMap="basemodel" parameterType="String">
+    	SELECT * from model where 1=1 and hosnum = #{hosnum} and year = #{year} and (del ='' or del is null) and guidang ='Y' order by xh
+     </select>
+     	<update id="updatesynergy" parameterType="model" >
+ 		UPDATE model 
+	SET stoptime =#{stoptime}
+	WHERE
+	hosnum =#{hosnum} 
+	and id=#{id} 
+ 	</update>
+ 	 <select id="findbystoptime"  resultMap="basemodel" parameterType="model">
+    	SELECT * from model where 1=1 and hosnum = #{hosnum} and (guidang ='' or guidang is null) and (del ='' or del is null) and stoptime is not null order by stoptime 
+     </select>
+     	<update id="updatescmodel" parameterType="model" >
+ 		update model set state=#{state} where id=#{id} and hosnum=#{hosnum}
+ 	</update>
+ 		<update id="updateguidang" parameterType="model" >
+ 		update model set guidang='Y' where id=#{id}
+ 	</update>
+ 	
+ 		  <select id="findyearmodel" resultMap="basemodel" parameterType="model">
+		select distinct year from model where year is not null and hosnum=#{hosnum} and guidang ='Y'
+   		 </select> 
+   		  <select id="findyearmodels" resultMap="basemodel" parameterType="model">
+		select * from model where  hosnum=#{hosnum} and guidang ='Y'
+   		 </select> 
+</mapper>

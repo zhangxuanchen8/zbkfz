@@ -1,0 +1,753 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiao.zhibiao_sbDao">
+ 	<resultMap id="base" type="zhibiao_sb" ></resultMap>
+ 	<resultMap id="ZNodes" type="com.ehinfo.hr.common.utils.tree.entity.ZNodes"></resultMap>
+ 	<resultMap id="zbkwh" type="com.ehinfo.hr.entity.zhibiao.zbkwh"></resultMap>
+ 		<select id="findByPage" resultMap="base" parameterType="zhibiao_sb">
+ 			select t.*,a.name as use_dept_name  ,c.z_name as qzname
+ 			from ZBK t left join bas_dept a on t.use_dept=a.id
+ 			 left join choose_dept c on c.key_id = t.qzdept
+ 			where 1=1 
+ 			 <if test="param.hosnum!=null and param.hosnum!=''">
+ 			 and t.hosnum=#{param.hosnum}
+ 			 </if>
+ 			 <if test="param.i_id!=null and param.i_id!=''">
+ 			 and ( t.pid=#{param.i_id} or t.i_id=#{param.i_id})
+ 			 </if>
+ 			 <if test="param.item!=null and param.item!=''">
+    		 and t.item like  CONCAT('%','${param.item}','%' )
+     		 </if>
+     		 ORDER BY  cast(xuhao as unsigned int)
+ 		</select>
+ 		<!-- t.i_id=#{param.i_id} or -->
+ 		<select id="findtwo"  resultMap="base" parameterType="java.lang.String">
+			select t.* from ZBK t where 1=1
+			<if test="param!=null and param!=''">
+			  and i_id = #{param} 
+			</if>
+			  and hosnum=#{param1} 
+			  ORDER BY xuhao
+		</select>
+			<select id="findById"  resultMap="base" parameterType="zhibiao_sb">
+			select t.* from ZBK t where 1=1
+			 <if test="i_id!=null and i_id!=''">
+    		 and i_id = #{i_id}
+     		 </if>
+     		 <if test="hosnum!=null and hosnum!=''">
+    		  and hosnum = #{hosnum}
+     		 </if>
+				<if test="item!=null and item!=''">
+    		  and item = #{item}
+     		 </if>
+     		 	<if test="category!=null and category!=''">
+    		  and category = #{category}
+     		 </if>
+		</select>
+			<select id="findzhkzh"  resultMap="base" parameterType="zhibiao_sb">
+			select t.* from zbkzh t where 1=1
+			 <if test="i_id!=null and i_id!=''">
+    		 and i_id = #{i_id}
+     		 </if>
+     		 <if test="hosnum!=null and hosnum!=''">
+    		  and hosnum = #{hosnum}
+     		 </if>
+		</select>
+		<select id="findByPid"  resultMap="base" parameterType="java.lang.String">
+			select t.* from ZBK t where 1=1
+            <if test="i_id != '' and i_id != null">
+   	           and t.i_id=#{i_id,jdbcType=VARCHAR}
+   	        </if>
+			ORDER BY xuhao
+		</select>
+		<select id="findlist" resultMap="base">
+		select * from ZBK where hosnum=#{id} ORDER BY xuhao
+   		 </select> 
+<!--    		 判断账号是否有省量化考核指标维护（2101）菜单，依次来区分医院跟科室账号打分 -->
+   		 <select id="findoutyy" resultType="java.lang.Integer"  parameterType="zhibiao_sb" >
+   		 	select count(1) from bas_user_dept_role_relation t
+			left join  bas_role r on  t.role_id=r.id
+			left join bas_user_role_right m on r.id=m.user_role_id
+			where t.user_id=#{param.use_dept}  and m.menu_id='2101'
+   		 </select>
+   		  <select id="findlistscore_yy" resultMap="base" parameterType="zhibiao_sb">
+		 select t.*,d.scorep,c.g_dept,k.zbk_fj,k.zipingfen as zpf,a.name as use_dept_name from zbk t left join zbkscore d on t.i_id = d.itemid 
+		 <if test="param.is_add!=null and param.is_add!=''">
+		   and d.id=#{param.is_add}   
+		 </if>
+		 <if test="param.type!=null and param.type!=''">
+		  and d.xulieid=#{param.type}  
+		 </if>
+		left join bas_dept a on t.use_dept=a.id
+		 left join sjzbk f on t.i_id=f.i_id and f.hosnum=#{param.hosnum}
+		 left join choose_dept c on c.key_id = t.qzdept and c.hosnum=#{param.hosnum}
+		 left join zbkfj k on t.i_id = k.i_id and k.hosnum=#{param.hosnum}
+		  <if test="param.user_id!=null and param.user_id!=''">
+		  and k.user_id=#{param.user_id}
+		  </if>
+		 where t.hosnum =#{param.hosnum}   
+		 
+		 
+		  and f.i_id is not null
+		  and FIND_IN_SET(t.i_id,#{param.pid})>0
+          <!-- and FIND_IN_SET(t.i_id,(select getChildList(#{param.pid}) ))>0 -->
+		   order by 
+		   cast(t.i_id as unsigned int),
+		   cast(t.xuhao as unsigned int)
+		 </select>
+		 
+		 
+		 <select id="findlistscore_ks" resultMap="base" parameterType="zhibiao_sb">
+		 select t.*,d.scorep,c.g_dept,k.zbk_fj,k.zipingfen as zpf,a.name as use_dept_name from zbk t left join zbkscore d on t.i_id = d.itemid 
+		 <if test="param.is_add!=null and param.is_add!=''">
+		   and d.id=#{param.is_add}   
+		 </if>
+		 <if test="param.type!=null and param.type!=''">
+		  and d.xulieid=#{param.type}  
+		 </if>
+		left join bas_dept a on t.use_dept=a.id
+		 left join sjzbk f on t.i_id=f.i_id 
+		 left join choose_dept c on c.key_id = t.qzdept
+		 left join zbkfj k on t.i_id = k.i_id
+		  <if test="param.user_id!=null and param.user_id!=''">
+		  and k.user_id=#{param.user_id}
+		  </if>
+		 where t.hosnum =#{param.hosnum}   
+		 
+		 
+		  and f.i_id is not null
+          and FIND_IN_SET(t.i_id,(#{param.pid} ))>0
+		   order by 
+		   cast(t.i_id as unsigned int),
+		   cast(t.xuhao as unsigned int)
+		 </select>
+		 
+		 
+<!--    		 <select id="findlistscore_ks" resultMap="base" parameterType="zhibiao_sb">
+   		 select b.*,c.g_dept, d.scorep,k.zbk_fj
+  from zbk b
+  left join zbkscore d
+    on b.i_id = d.itemid
+    LEFT JOIN sjzbk f ON b.i_id = f.i_id
+    left join choose_dept c on c.key_id = b.qzdept
+  left join zbkfj k 
+    on b.i_id = k.i_id
+     <if test="param.user_id!=null and param.user_id!=''">
+		  and k.user_id=#{param.user_id}
+		  </if>
+ where b.i_id in
+       (select j.i_id
+          from SJZBK j
+         where j.synergy = 'Y'
+          AND FIND_IN_SET(j.i_id,(#{param.pid}))>0
+               )
+               and f.i_id IS NOT NULL 
+ order by 
+ cast(b.xuhao as unsigned int),cast(b.i_id as unsigned int)
+   		 </select>  -->
+   		  <select id="yearscore" resultMap="base" parameterType="zhibiao_sb">
+		select t.* from sjZBK t where  t.hosnum=#{param.hosnum}  
+ 		
+ 		<!-- START WITH t.i_id=#{param.pid} CONNECT BY PRIOR t.i_id=t.pid -->
+		 and FIND_IN_SET(t.i_id,(select getChildList_sj(#{param.pid})))>0
+		order by 
+		 cast(t.i_id as unsigned int)
+		<!-- to_number(t.i_id) -->
+   		 </select> 
+   		 
+   	<!-- 	 <select id="findpeoplelist" resultMap="base" parameterType="java.lang.String">
+		select * from v_ryzbk where unitid 
+   		 in(select unitid from ZC_B_UNITS 
+			where psunitid =#{id})
+   		 </select> 
+
+   		  <select id="findpeoplepage" resultMap="base" parameterType="zhibiao_sb">
+		select * from v_ryzbk where unitid 
+   		 in(select unitid from ZC_B_UNITS 
+			where psunitid =#{param.hosnum})
+   		 </select> 
+   		 <select id="findpeoplename" resultMap="base" parameterType="java.lang.String">
+		select * from v_ryzbk where unitid 
+   		 in(select unitid from ZC_B_UNITS 
+			where psunitid =#{param1}) and recordno = #{param}
+   		 </select>  -->
+   		 <select id="findyearlist" resultMap="base">
+		select distinct year from sjzbk where year is not null and hosnum=#{hosnum} 
+
+		and year != date_format(sysdate(),'%Y')
+		and FIND_IN_SET(i_id,(select getChildList(#{pid})))>0
+
+   		 </select> 
+   		  <select id="findyearlist1" resultMap="base">
+		select distinct year from sjzbk where year is not null and hosnum=#{hosnum} 
+		<!-- and FIND_IN_SET(i_id,(select getChildList(#{pid})))>0 -->
+   		 </select> 
+   		<delete id="deletelist" parameterType ="java.util.List">
+   			DELETE FROM ZBK WHERE i_id in(
+			<foreach item="o" collection="list" open="" separator="," close="" >
+				#{o}
+			</foreach>
+			)
+   		</delete>
+   		<delete id="delcf" parameterType="zhibiao_sb">
+   		delete from  ZBK  where FIND_IN_SET(i_id,#{pid})>0
+   <!-- 			delete from  ZBK where i_id in(select i_id form (select t.i_id  from ZBK t
+ where t.hosnum = #{hosnum} 
+and FIND_IN_SET(t.i_id,(select getChildList(#{pid})))>0
+) s)  -->
+
+   		</delete>
+   		
+   		
+   		<select id="haveson" resultType="Integer" parameterType="java.util.List">
+	  select count(*) from (
+	  	<foreach item="o" collection="list" open="" separator=" union all " close="" >
+	  		select * from ZBK  where pid = #{o}
+	  	</foreach> 
+	  ) t
+    </select> 
+   
+    
+    <insert id="insert">
+    	insert into ZBK (i_id,item,score,category,item_desc,is_max,is_add,note,category_id,is_using,districtid,hosnum,pid,lczt,keshi,xuhao,use_dept,stop_time,last,maxscore,is_sub) 
+	  values (
+	<!--   (select i_id from (select cast(case when max(i_id)='' then '0' else max(i_id) End  as unsigned int) +1 as i_id from ZBK  ) as a), -->
+	  #{i_id},
+	  #{item,jdbcType=VARCHAR},
+	  #{score,jdbcType=VARCHAR},
+	  #{category,jdbcType=VARCHAR},	  
+	  #{item_desc,jdbcType=VARCHAR},
+	  #{is_max,jdbcType=VARCHAR},
+	  #{is_add,jdbcType=VARCHAR},
+	  #{note,jdbcType=VARCHAR},
+	  #{category_id,jdbcType=VARCHAR},
+	  #{is_using,jdbcType=VARCHAR},
+	  #{districtid,jdbcType=VARCHAR},
+	  #{hosnum,jdbcType=VARCHAR},
+	  #{pid,jdbcType=VARCHAR},
+	  #{lczt,jdbcType=VARCHAR},
+	  #{keshi,jdbcType=VARCHAR},
+	  #{xuhao,jdbcType=VARCHAR},
+	  #{use_dept,jdbcType=VARCHAR},
+	  #{stop_time,jdbcType=VARCHAR},
+	  #{last,jdbcType=VARCHAR},
+	  #{maxscore,jdbcType=VARCHAR},
+	  #{is_sub,jdbcType=VARCHAR}
+	  )
+    </insert>
+    
+    <update id="update" parameterType="zhibiao_sb">
+    	UPDATE ZBK 
+		SET item=#{item,jdbcType=VARCHAR},
+			score=#{score,jdbcType=VARCHAR},
+			category=#{category,jdbcType=VARCHAR},
+			item_desc=#{item_desc,jdbcType=VARCHAR},				
+			is_max=#{is_max,jdbcType=VARCHAR},
+			is_add=#{is_add,jdbcType=VARCHAR},
+			note=#{note,jdbcType=VARCHAR},
+			category_id=#{category_id,jdbcType=VARCHAR},
+			is_using=#{is_using,jdbcType=VARCHAR},
+			districtid=#{districtid,jdbcType=VARCHAR},		
+			hosnum=#{hosnum,jdbcType=VARCHAR},
+			pid =#{pid,jdbcType=VARCHAR},
+			xuhao=#{xuhao,jdbcType=VARCHAR},
+			keshi=#{keshi,jdbcType=VARCHAR},
+			lczt=#{lczt,jdbcType=VARCHAR},
+			last =#{last,jdbcType=VARCHAR},
+			use_dept=#{use_dept,jdbcType=VARCHAR},
+			stop_time=#{stop_time,jdbcType=VARCHAR},
+			maxscore=#{maxscore,jdbcType=VARCHAR},
+			is_sub=#{is_sub,jdbcType=VARCHAR}
+		WHERE 
+			i_id=#{i_id,jdbcType=VARCHAR}
+    </update>
+    
+    <update id="updatescore" parameterType="zhibiao_sb">
+    		UPDATE ZBK 
+		SET 
+			finlscore =#{finlscore,jdbcType=VARCHAR}
+		WHERE 
+			i_id=#{i_id,jdbcType=VARCHAR}
+    </update>
+    
+    <insert id="yinru" parameterType="zhibiao_sb">
+    	insert into ZBK (i_id,item,score,category,item_desc,is_max,is_add,note,category_id,is_using,districtid,hosnum,pid,xuhao) 
+	  select i_id,item,score,category,item_desc,is_max,is_add,note,category_id,is_using,districtid,hosnum,pid,xuhao from sjZBK t
+ where t.year = #{year}  and t.hosnum = #{hosnum} 
+<!--   START WITH t.i_id = #{pid} CONNECT BY PRIOR t.i_id = t.pid  -->
+and FIND_IN_SET(t.i_id,(select getChildList(#{pid})))>0
+order by cast(i_id 	as unsigned int)
+    </insert>
+    
+  	<select id="findpid"  resultMap="base" parameterType="java.lang.String">
+
+			select t.* from ZBK t where pid = #{param} and hosnum=#{param1} order by cast(i_id as unsigned int)
+
+		</select>
+		
+		<select id="dayinpx" resultMap="base" parameterType="zhibiaoku">
+   		select t.*, t.rowid  from ZBK t  where t.pid !=#{param.pid} and find_in_set(t.i_id,(select getChildList(#{param.pid})))>0
+ 		 and t.hosnum=#{param.hosnum} order by to_number(pid), xuhao
+   		</select>
+		
+		<select id="findpid1" resultMap="base" parameterType="java.lang.String">
+				select i_id from zbk where is_max='1' and hosnum =#{hosnum} and last ='0' 
+   			and find_in_set(i_id,(select getChildList(#{pid})))>0 
+   		
+		</select>
+		<update id="updateusing" parameterType="zhibiao_sb">
+    	UPDATE ZBK 
+		SET is_using='0' 
+		WHERE 
+			pid=#{pid,jdbcType=VARCHAR}
+			and hosnum=#{hosnum,jdbcType=VARCHAR}
+</update>
+    <insert id="updatedinggao" parameterType="zhibiao_sb">
+       insert into sjZBK (i_id,item,score,category,item_desc,is_max,is_add,note,category_id,is_using,districtid,hosnum,pid,year,xuhao) 
+       select i_id,item,score,category,item_desc,is_max,is_add,note,category_id,is_using,districtid,#{hosnum} as hosnum,pid,#{year}, year from zbk where hosnum=#{hosnum} and is_using = '1'    
+	and FIND_IN_SET(i_id,#{pid})>0
+       order by 
+        cast(i_id as unsigned int)
+    </insert>
+    <delete id="delzbkzh" parameterType="zhibiao_sb">
+      delete from zbkzh where i_id in(
+        select i_id
+        from zbk
+        where hosnum=#{hosnum} and is_using = '1'    
+	and FIND_IN_SET(i_id,(select getChildList(#{pid})))>0
+    )  
+    </delete>
+    <delete id="deldinggao" parameterType="zhibiao_sb">
+
+    DELETE 
+FROM
+	sjzbk 
+WHERE
+	i_id IN (
+	SELECT
+		t.i_id 
+	FROM
+		zbk t 
+	WHERE
+		t.hosnum = #{hosnum} and t.is_using = '1'
+		AND FIND_IN_SET(t.i_id,#{pid})>0) 
+	AND YEAR = #{year}
+    </delete>
+    	<select id="findbgxl" resultMap="base" parameterType="zhibiao_sb">
+    		select t.* from ZBK t where t.is_using='1' and t.last='1' 
+    			<if test="use_dept != '' and use_dept != null">
+   	     	and (t.use_dept=#{use_dept} or instr((select c.g_dept from choose_dept c where c.key_id=t.qzdept), #{use_dept}) > 0)
+   				</if>
+			and FIND_IN_SET(t.i_id,#{pid})>0
+		    order by 
+		     cast(t.xuhao as unsigned int),cast(t.i_id as unsigned int)
+    	</select>
+    <select id="findzj"  resultType="java.lang.Double" parameterType="java.lang.String">
+    select IFNULL(SUM(cast(score as unsigned int)), 0)from (select * from zbk where is_using = '1' and hosnum =#{param} and pid=#{param1}  ) a 
+	 	<!-- select NVL(SUM(To_number(score)), 0) from (select * from zbk where is_using = '1' and is_max = '0' and hosnum = #{param} and pid=#{param1} ) a  -->
+		</select>
+   <select id="countmax" resultType="java.lang.Double" parameterType="java.lang.String">
+    	select  ifnull(sum(t.score), 0) from (select pid,max(cast(score as unsigned int )) as score from (select * from zbk where is_using='1' and hosnum= #{param} and pid=#{param1} ) a group by pid) t
+    
+   </select> 
+   <update id="upscorehj" parameterType="zhibiao_sb">
+    	UPDATE ZBK 
+		SET score=#{score,jdbcType=VARCHAR}
+		WHERE 
+			 hosnum=#{hosnum,jdbcType=VARCHAR}
+			 and i_id=#{i_id,jdbcType=VARCHAR}
+   </update>
+   <select id="getZhiBiaoTree" resultMap="ZNodes" parameterType="String">
+    <!-- select  id, pid, hosnum, name from bas_dept
+    START WITH id = #{param} CONNECT BY PRIOR id = pid
+  	order by id -->
+  	 select  t.id, t.pid, t.hosnum, t.name from bas_dept t left join bas_hospitals h on h.hosnum=t.hosnum and t.ishospital='Y'
+	where FIND_IN_SET( pid, ( SELECT getChildList_bas ( #{param} ) ) ) > 0  or
+	 t.id =#{param}
+    order by  h.organizeno,t.id
+   </select>	
+   
+   <insert id="insertlist">
+   insert into zbk(i_id,item,score,category,item_desc,pid,hosnum) 
+   values
+   <foreach collection="zbklist" item="zbk" open="" separator="," close="" index="idx" >
+    (
+    (select i_id from (select to_number(case when max(i_id)='' then '0' else max(i_id) End) +1+#{idx} as i_id from ZBK  ) a),
+    #{zbk.zbkmc,jdbcType=VARCHAR},
+    #{zbk.score,jdbcType=VARCHAR},
+    #{zbk.category,jdbcType=VARCHAR},
+    #{zbk.item_desc,jdbcType=VARCHAR},
+    #{pid,jdbcType=VARCHAR},
+    #{hosnum,jdbcType=VARCHAR}
+    )
+    </foreach>
+   </insert>
+   <select id="isdinggao"  resultType="Integer"  parameterType="zhibiao_sb">
+   	select count(1) from sjZBK t where 1=1
+   	<if test="param.i_id != '' and param.i_id != null">
+   	  and t.i_id=#{param.i_id}
+   	</if>
+   </select>
+   <select id="isxietong"  resultType="Integer"  parameterType="zhibiao_sb">
+   	select count(1) from sjZBK t where 1=1
+   	<if test="param.i_id != '' and param.i_id != null">
+   	  and t.i_id=#{param.i_id}
+   	</if>
+   	 and synergy='Y'
+   </select>
+ 	<select id="yearscore22" resultMap="base" parameterType="zhibiao_sb">
+		 select t.* from ZBK t where t.hosnum=#{param.hosnum} 
+		and find_in_set(t.pid,(select getChildList(#{param.pid})))>0
+		order by 
+		cast(t.pid as unsigned int),
+		 cast(t.xuhao as unsigned int)
+		 
+		 <!-- select t.* from zbk t 
+		 where t.hosnum =#{param.hosnum}   
+          and FIND_IN_SET(t.i_id,(select getChildList(#{param.pid}) ))>0
+		   order by 
+		   cast(t.i_id as unsigned int),
+		   cast(t.xuhao as unsigned int) -->
+ 	</select> 
+ 		<select id="yearscore33" resultMap="base" parameterType="zhibiaoku">
+		select t.* from ZBK t where t.hosnum=#{param.hosnum} and t.i_id=#{param.pid} order by cast(t.i_id as unsigned int),
+		 cast(t.xuhao as unsigned int)
+   		 </select>
+ 	
+ 	<insert id="insertsilei" >
+ 		insert into sjzbk(i_id,hosnum) values(#{i_id},#{hosnum})
+ 	</insert>
+ 	<delete id="deletesilei" >
+ 		delete from sjzbk where i_id=#{i_id}	
+ 	</delete>
+ 	<update id="updatelistTree" >
+ 		update zbk set use_dept=#{dept_id},fzdept=#{g_dept,jdbcType=VARCHAR}
+ 		 where i_id in (
+ 		<foreach collection="slist" item="s" open="" separator="union all" >
+ 		 select i_id from (select i_id from zbk 
+ 		 <!-- START WITH i_id = #{s} CONNECT BY PRIOR i_id = pid -->
+ 		 where FIND_IN_SET(i_id,(select getChildList(#{s})))>0
+ 		) a
+ 		</foreach>
+ 		)
+ 	</update>
+ 	<update id="delqzdept" >
+ 		update zbk set qzdept=''
+ 		 where i_id in (
+ 		<foreach collection="slist" item="s" open="" separator="union all" >
+ 		 select i_id from (select i_id from zbk 
+ 		 <!-- START WITH i_id = #{s} CONNECT BY PRIOR i_id = pid -->
+ 		 where FIND_IN_SET(i_id,(select getChildList(#{s})))>0
+ 		) a
+ 		</foreach>
+ 		)
+ 	</update>
+ 	<update id="deldept" >
+ 		update zbk set use_dept=''
+ 		 where i_id in (
+ 		<foreach collection="slist" item="s" open="" separator="union all" >
+ 		 select i_id from (select i_id from zbk 
+ 		 where FIND_IN_SET(i_id,(select getChildList(#{s})))>0
+ 		 ) a
+ 		</foreach>
+ 		)
+ 	</update>
+ 	<update id="updateGroupTree" >
+ 		update zbk set qzDept=#{qzDept}
+ 		 where i_id in (
+ 		<foreach collection="slist" item="s" open="" separator="union all" >
+ 		 select i_id from (select i_id from zbk 
+ 		 where FIND_IN_SET(i_id,(select getChildList(#{s})))>0
+ 		 ) a
+ 		</foreach>
+ 		)
+ 	</update>
+ 	<select id="allindept" resultMap="base" parameterType="zhibiao_sb">
+ 		select b.* from zbk b where  hosnum=#{hosnum} and is_using = '1'   
+ 		 and (b.use_dept is null or b.use_dept='') and( b.qzdept is null or b.qzdept='' ) and last='1' 
+ 		<!-- START WITH pid = #{pid} CONNECT BY PRIOR i_id = pid  -->
+ 		and FIND_IN_SET(pid,(select getChildList(#{pid})))>0
+ 		<!-- and (use_dept is null or use_dept='') and last='1' -->
+ 	</select>
+ 	<update id="updatesynergy" parameterType="zhibiao_sb" >
+ 		update sjzbk set synergy='Y' where hosnum=#{hosnum}  and is_using = '1' 
+ 		and FIND_IN_SET(i_id,(select getChildList(#{pid})))>0
+ 	</update>
+ 	<update id="updatex" parameterType="zhibiao_sb" >
+ 		update sjzbk set synergy='Y' where hosnum=#{hosnum} and i_id =#{pid}
+ 	</update>
+ 		<update id="shouhui" parameterType="zhibiao_sb" >
+ 		update sjzbk set synergy='' where FIND_IN_SET(i_id,#{pid})>0
+ 		<!-- START WITH pid = #{pid} CONNECT BY PRIOR i_id = pid -->
+ 		
+ 		
+ 	</update>
+ 	<select id="getZbkseq" resultType="java.lang.String">
+		 SELECT nextval('ZBK_SEQ') as nextval
+	</select>
+	<update id="updatezhibiaostoptime" parameterType="zhibiao_sb" >
+ 		UPDATE zbk 
+	SET stop_time =#{stop_time}
+	WHERE
+	hosnum =#{hosnum}
+	AND is_using = '1' 
+	AND FIND_IN_SET(i_id, ( SELECT getChildList (#{pid}) ) ) > 0
+ 	</update>
+ 	
+ 	
+ 		<!-- 拼接树功能 -->
+    	
+    	<update id="updatepjs" parameterType="zhibiao_sb">
+    		UPDATE ZBK 
+		SET pid=#{pid,jdbcType=VARCHAR}
+		WHERE 
+			 hosnum=#{hosnum,jdbcType=VARCHAR}
+			 and i_id=#{i_id,jdbcType=VARCHAR}
+    	</update>
+    	
+    	<select id="findlistthree" resultMap="base" parameterType="java.lang.String">
+    		select * from zbk  where hosnum=#{hosnum} and (pid is null or pid='') and is_sub='1'
+    	</select>
+    	
+    	<select id="findjcb" resultMap="base" parameterType="java.lang.String">
+    		select * from zbk  where hosnum=#{hosnum} and is_sub='0'
+    	</select>
+    	
+    	<select id="findidpid" resultMap="base" parameterType="zhibiao_sb">
+ 		select t.* from ZBK t where t.hosnum=#{hosnum} 
+ 		 <!-- START WITH t.i_id=#{i_id} CONNECT BY PRIOR t.i_id=t.pid -->
+ 		and FIND_IN_SET(i_id,(select getChildList(#{i_id})))>0
+ 		  order by i_id,xuhao   		
+    	</select>
+    	
+    	<select id="findpidid" resultMap="base" parameterType="zhibiao_sb">
+ 		select t.* from ZBK t where t.hosnum=#{hosnum} 
+ 		 <!-- START WITH t.i_id=#{i_id} CONNECT BY PRIOR t.pid=t.i_id  -->
+ 		 and FIND_IN_SET(i_id,(select getChildList(#{i_id})))>0
+ 		  order by i_id,xuhao   		
+    	</select>
+    	
+    	<insert id="inserttree" parameterType="zhibiao_sb">
+			insert into ZBKpj (i_id,item,score,category,item_desc,is_max,is_add,note,category_id,is_using,districtid,hosnum,pid,keshi,lczt,finlscore,xuhao,treename,is_sub) 
+	  values (
+	  #{i_id,jdbcType=VARCHAR},
+	  #{item,jdbcType=VARCHAR},
+	  #{score,jdbcType=VARCHAR},
+	  #{category,jdbcType=VARCHAR},	  
+	  #{item_desc,jdbcType=VARCHAR},
+	  #{is_max,jdbcType=VARCHAR},
+	  #{is_add,jdbcType=VARCHAR},
+	  #{note,jdbcType=VARCHAR},
+	  #{category_id,jdbcType=VARCHAR},
+	  #{is_using,jdbcType=VARCHAR},
+	  #{districtid,jdbcType=VARCHAR},
+	  #{hosnum,jdbcType=VARCHAR},
+	  #{pid,jdbcType=VARCHAR},
+	  #{keshi,jdbcType=VARCHAR},
+	  #{lczt,jdbcType=VARCHAR},
+	  #{finlscore,jdbcType=VARCHAR},
+	  #{xuhao,jdbcType=VARCHAR},
+	  #{treename,jdbcType=VARCHAR},
+	  #{is_sub,jdbcType=VARCHAR}
+	  )
+    	</insert>
+    	
+    	<select id="findtreelist" resultMap="base" parameterType="java.lang.String">
+			select * from ZBKpj where hosnum=#{hosnum} ORDER BY i_id, xuhao
+   		</select> 
+   		
+   		<select id="treename" resultMap="base" parameterType="java.lang.String">
+			select * from ZBKpj where hosnum=#{hosnum} and i_id=#{i_id} and treename=#{item} ORDER BY i_id, xuhao
+   		</select> 
+   		
+   		<select id="treeyl" resultMap="base" parameterType="zhibiao_sb">
+			select t.* from ZBKpj t where t.hosnum=#{hosnum} 
+			 START WITH t.pid=#{pid} CONNECT BY PRIOR t.i_id=t.pid 
+			 
+			  order by xuhao
+   		</select> 
+   		
+   		<update id="updatettree" parameterType="zhibiao_sb">
+   			update ZBKpj set 
+	  		 item=#{item,jdbcType=VARCHAR},
+	 		 score=#{score,jdbcType=VARCHAR},
+	 		 category=#{category,jdbcType=VARCHAR},	  
+	 		 item_desc=#{item_desc,jdbcType=VARCHAR},
+	  	     is_max=#{is_max,jdbcType=VARCHAR},
+			 is_add=#{is_add,jdbcType=VARCHAR},
+			 note=#{note,jdbcType=VARCHAR},
+			 category_id=#{category_id,jdbcType=VARCHAR},
+	  		 is_using=#{is_using,jdbcType=VARCHAR},
+	  		 districtid=#{districtid,jdbcType=VARCHAR},
+			 pid=#{pid,jdbcType=VARCHAR},
+	 		 keshi=#{keshi,jdbcType=VARCHAR},
+	 		 lczt=#{lczt,jdbcType=VARCHAR},
+	 		 finlscore=#{finlscore,jdbcType=VARCHAR},
+	 		 xuhao=#{xuhao,jdbcType=VARCHAR},
+	 		 is_sub=#{is_sub,jdbcType=VARCHAR}
+	 		 where 
+	 		 i_id=#{i_id,jdbcType=VARCHAR}
+	 		 and
+	 		 hosnum=#{hosnum,jdbcType=VARCHAR}
+	 		 and
+	 		 treename=#{treename,jdbcType=VARCHAR}
+   		</update>
+   		
+   		<select id="findjydinggao" resultMap="base" parameterType="zhibiao_sb">
+	SELECT *
+  FROM (SELECT t.*
+          FROM ZBK t
+         WHERE t.hosnum = #{param.hosnum}
+           AND FIND_IN_SET(t.I_ID,
+                           (SELECT getchildlist(#{param.pid}))) > 0
+         ORDER BY i_id, xuhao) s
+ WHERE i_id NOT IN
+       (SELECT t.pid
+          FROM ZBK t
+         WHERE t.hosnum = #{param.hosnum}
+           AND FIND_IN_SET(t.I_ID,
+                           (SELECT getchildlist(#{param.pid} ))) > 0)
+
+   		</select>
+   		
+   		<update id="updatejiucuo" parameterType="zhibiao_sb">
+    		UPDATE ZBK 
+		SET 
+			last ='1'
+		WHERE 
+			i_id=#{i_id,jdbcType=VARCHAR}
+			and 
+			hosnum=#{hosnum,jdbcType=VARCHAR}
+			and year is null
+    </update>
+   		<select id="findlistlast" resultMap="base" parameterType="zhibiao_sb">
+   		select t.*,a.name as use_dept_name  ,c.z_name as qzname from zbk t
+		left join bas_dept a on t.use_dept=a.id and a.hosnum=#{param.hosnum}
+ 			 left join choose_dept c on c.key_id = t.qzdept and c.hosnum=#{param.hosnum}
+ 		where t.hosnum=#{param.hosnum} and t.last ='1' 
+ 		<if test="param.use_dept!=null and param.use_dept!=''">
+		  and t.use_dept=#{param.use_dept}  
+		 </if>
+ 		 and FIND_IN_SET(t.i_id,#{param.pid})>0
+          order by 
+         cast(t.xuhao as unsigned int),cast(t.i_id as unsigned int)
+   		</select> 
+   		
+   		<select id="findlistlasts" resultMap="base" parameterType="zhibiao_sb">
+   		select t.*,a.name as use_dept_name  ,c.z_name as qzname from zbk t
+		left join bas_dept a on t.use_dept=a.id 
+ 			 left join choose_dept c on c.key_id = t.qzdept
+ 		where t.hosnum=#{hosnum} and t.last ='1' 
+ 		<if test="use_dept!=null and use_dept!=''">
+			and (t.use_dept&lt;&gt;'' or t.qzdept&lt;&gt;'')
+		 </if>
+ 		 and FIND_IN_SET(t.i_id,#{pid})>0
+ 		 order by 
+ 		 cast(t.xuhao as unsigned int),cast(t.i_id as unsigned int)
+   		</select> 
+   		
+   		  <select id="finduserdept" resultMap="ZNodes" parameterType="zhibiao_sb">
+			   select distinct t.id,t.name,#{pid} pid ,''hosnum,'2' p_id
+			  from zbk m
+			left join bas_dept t
+			on t.id = m.use_dept and t.hosnum=#{hosnum}
+			 where m.last = '1'
+			   and m.hosnum = #{hosnum}
+			and FIND_IN_SET(m.pid,#{treename})>0
+  	 </select>
+  	 
+  	 	<select id="findlistbydept" resultMap="base" parameterType="zhibiao_sb">
+   			select z.i_id
+                                         from ZBK z
+                                        where  z.last = '1'
+                                          and (z.use_dept = #{use_dept}
+ 			  or instr((select c.g_dept from choose_dept c where c.key_id=z.qzdept),#{use_dept}) > 0)
+  		 <if test="pid!=null and pid!=''">
+		and  FIND_IN_SET(z.i_id,#{pid}) > 0 
+		 </if>
+   
+   		</select> 
+   		<select id="findpidbydept" resultMap="base" parameterType="zhibiao_sb">
+   		select distinct t.pid
+                  from ZBK t
+                  where 1=1 
+                  <if test="pid==null or pid==''">
+					and t.pid not in (select m.i_id from zbk m) 
+		 			</if>
+        	          <if test="pid!=null and pid!=''">
+					and t.pid  in (select m.i_id from zbk m) 
+		 			</if>
+                and FIND_IN_SET(t.I_ID,#{i_id})>0 
+   		</select> 
+   		<select id="findbydept" resultMap="base" parameterType="zhibiao_sb">
+	select  t.use_dept,d.name as use_dept_name,COUNT(t.i_id) as num from zbk t left join bas_dept d on d.id = t.use_dept where t.last='1' and FIND_IN_SET(t.i_id,getChildList(#{pid}))>0
+	GROUP BY t.use_dept,d.name
+   		</select> 
+   		
+   	<update id="updatesc" parameterType="zhibiao_sb" >
+ 		update zbk set state=#{state} where FIND_IN_SET(i_id,(select getChildList(#{pid})))>0 and hosnum=#{hosnum}
+ 	</update>
+ 	
+ 	<update id="updatesc1" parameterType="zhibiao_sb" >
+ 		update zbk set state=#{state} where hosnum=#{hosnum} and i_id=#{i_id}
+ 	</update>
+ 	
+ 	    <insert id="insertzbkf">
+    	insert into  zbkzh (i_id,item,score,category,item_desc,is_max,is_add,note,category_id,is_using,districtid,hosnum,pid,lczt,keshi,xuhao,use_dept,stop_time,last,maxscore,is_sub) 
+	  values (
+	  #{i_id},
+	  #{item,jdbcType=VARCHAR},
+	  #{score,jdbcType=VARCHAR},
+	  #{category,jdbcType=VARCHAR},	  
+	  #{item_desc,jdbcType=VARCHAR},
+	  #{is_max,jdbcType=VARCHAR},
+	  #{is_add,jdbcType=VARCHAR},
+	  #{note,jdbcType=VARCHAR},
+	  #{category_id,jdbcType=VARCHAR},
+	  #{is_using,jdbcType=VARCHAR},
+	  #{districtid,jdbcType=VARCHAR},
+	  #{hosnum,jdbcType=VARCHAR},
+	  #{pid,jdbcType=VARCHAR},
+	  #{lczt,jdbcType=VARCHAR},
+	  #{keshi,jdbcType=VARCHAR},
+	  #{xuhao,jdbcType=VARCHAR},
+	  #{use_dept,jdbcType=VARCHAR},
+	  #{stop_time,jdbcType=VARCHAR},
+	  #{last,jdbcType=VARCHAR},
+	  #{maxscore,jdbcType=VARCHAR},
+	  #{is_sub,jdbcType=VARCHAR}
+	  )
+    </insert>
+ 	<select id="getpid" resultType="java.lang.String" parameterType="java.lang.String">
+			SELECT getChildList (#{pid})
+	    </select>
+ 	<select id="getpids" resultType="java.lang.String" parameterType="java.lang.String">
+			SELECT getchildlistsss (#{pid})
+	    </select>
+	    
+	    
+	    <update id="updatejiucuo1" parameterType="zhibiaoku">
+    		UPDATE ZBK 
+		SET 
+			last ='0'
+		WHERE 
+			i_id=#{i_id,jdbcType=VARCHAR}
+			and 
+			hosnum=#{hosnum,jdbcType=VARCHAR}
+			and year is null
+    	</update>
+    	
+    	<select id="findjydinggao1" resultMap="base" parameterType="zhibiaoku">
+   			select *  from (select t.* from ZBK t where FIND_IN_SET(t.i_id,(select getChildList(#{param.pid})))>0 and t.hosnum = #{param.hosnum} order by cast(t.i_id as unsigned int), cast(t.xuhao as unsigned int) 
+)a
+ 			where a.i_id in (select t.pid from ZBK t where FIND_IN_SET(t.i_id,(select getChildList(#{param.pid})))>0 and t.hosnum = #{param.hosnum})
+   		</select>
+   		
+   		<update id="updategdzbk" parameterType="java.lang.String">
+ 		update zbk set guidang='Y' 
+ 	 where FIND_IN_SET(I_ID,#{pid})>0
+ 	</update>
+ 		<select id="findsjzbk" resultMap="base" parameterType="zhibiaoku">
+ 		select t.* from sjzbk t where t.i_id=#{i_id}
+   		</select>
+</mapper>

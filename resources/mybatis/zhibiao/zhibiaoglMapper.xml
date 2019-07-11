@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.zhibiao.zhibiaoglDao">
+	<resultMap id="base" type="zbkscore"></resultMap>
+  <insert id="insert" parameterType ="zbkscore">
+     	insert into ZBKscore (id,name,scorep,xulieid,itemid,finlscore) 
+	  values (
+	  #{id,jdbcType=VARCHAR},
+	  #{name,jdbcType=VARCHAR},
+	  #{scorep,jdbcType=VARCHAR},	  
+	  #{xulieid,jdbcType=VARCHAR},
+	  #{itemid,jdbcType=VARCHAR},
+	  #{finlscore,jdbcType=VARCHAR}
+	  )
+     </insert>
+      <insert id="insert_score" parameterType ="java.util.List">
+     	insert into ZBKscore (id,scorep,itemid,finlscore,name,xulieid,year) 
+	  values 
+	  <foreach item="o" collection="list" open="" separator="," close="" >
+	  (
+	  #{o.id,jdbcType=VARCHAR},
+	  #{o.scorep,jdbcType=VARCHAR},	  
+	  #{o.itemid,jdbcType=VARCHAR},
+	  #{o.finlscore,jdbcType=VARCHAR},
+	   #{o.name,jdbcType=VARCHAR},
+	   #{o.xulieid,jdbcType=VARCHAR},
+	   #{o.year,jdbcType=DATE}
+	  )
+	  </foreach>
+     </insert>
+         <insert id="insert_scores" parameterType ="java.util.List">
+     	insert into ZBKscores (id,scorep,itemid,name,state,maxscore) 
+	  values 
+	  <foreach item="o" collection="list" open="" separator="," close="" >
+	  (
+	  #{o.id,jdbcType=VARCHAR},
+	  #{o.scorep,jdbcType=VARCHAR},	  
+	  #{o.itemid,jdbcType=VARCHAR},
+	  #{o.name,jdbcType=VARCHAR},
+	  #{o.state,jdbcType=VARCHAR},
+	  #{o.maxscore,jdbcType=VARCHAR}
+	  )
+	  </foreach>
+     </insert>
+     <select id="findByPid"  resultMap="base" parameterType="java.lang.String">
+     	select t.* from ZBKSCORE t where id=#{id} ORDER BY itemid
+     </select>
+     
+     <select id="findsbydept"  resultMap="base" parameterType="zbkscore">
+     	select t.* from ZBKSCORE t where id=#{id} and t.itemid in (select k.i_id from zbk k where k.use_dept = #{dept}) ORDER BY itemid
+     </select>
+     <select id="findmaxscore"  resultMap="base" parameterType="java.lang.String">
+     	select max(cast(t.scorep as decimal(10,2))) as scorep,,t.itemid,t.name from zbkscore t left join zbk z on z.i_id = t.name 
+where t.id=#{id} and z.is_max='1' 
+and t.itemid in (select k.i_id from zbk k where k.use_dept = #{dept})
+group by t.name 
+     </select>
+     <select id="findssum" resultMap="base" parameterType="zbkscore">
+		      SELECT
+			sum(cast(t.scorep as  decimal(10,2))) AS scorep,
+			t.NAME itemid,
+			z.pid name,t.id,z.maxscore,z.is_sub
+		FROM
+			zbkscores t
+			LEFT JOIN zbk z ON z.i_id = t.NAME 
+		WHERE
+		t.itemid not in (select s.name from zbkscores s)
+		and	t.id = #{id} and  (z.is_max = '0' or z.is_max is null or z.is_max ='')
+		GROUP BY
+			t.NAME
+      </select>
+       <select id="findsmax" resultMap="base" parameterType="zbkscore">
+            SELECT
+			max(cast(t.scorep as decimal(10,2))) AS scorep,
+			t.NAME itemid,
+			z.pid name,t.id,z.maxscore,z.is_sub
+		FROM
+			zbkscores t
+			LEFT JOIN zbk z ON z.i_id = t.NAME 
+		WHERE
+			t.itemid not in (select s.name from zbkscores s)
+		and t.id = #{id} and z.is_max='1'
+		GROUP BY
+			t.NAME
+      </select>
+      <select id="findsum" resultMap="base" parameterType="zbkscore">
+		      SELECT
+			sum(cast(t.scorep as  decimal(10,2))) AS scorep,
+			t.NAME itemid,
+			z.pid name,t.id,z.maxscore,z.is_sub
+		FROM
+			zbkscore t
+			LEFT JOIN zbk z ON z.i_id = t.NAME 
+		WHERE
+			t.id = #{id} and  (z.is_max = '0' or z.is_max is null or z.is_max ='')
+			and t.xulieid='1'
+		GROUP BY
+			t.NAME
+      </select>
+       <select id="findmax" resultMap="base" parameterType="zbkscore">
+            SELECT
+            max(cast(t.scorep as decimal(10,2))) AS scorep,
+			t.NAME itemid,
+			z.pid name,t.id,z.maxscore,z.is_sub
+		FROM
+			zbkscore t
+			LEFT JOIN zbk z ON z.i_id = t.NAME 
+		WHERE
+			t.id = #{id} and z.is_max='1'
+			and t.xulieid='1'
+		GROUP BY
+			t.NAME
+      </select>
+       <select id="findssumfin" resultMap="base" parameterType="zbkscore">
+		    SELECT
+				t.id,
+				t.NAME,
+				t.itemid,
+				sum( t.scorep ) AS scorep,
+				z.maxscore 
+			FROM
+				zbkscores t
+				LEFT JOIN zbk z ON z.i_id = t.itemid 
+			WHERE
+				t.name = #{name}
+			GROUP BY
+				itemid
+      </select>
+      
+      
+      <select id="findPid"  resultMap="base" parameterType="java.lang.String">
+     	select t.* from ZBKSCORE t where id=#{id}
+     	 and t.itemid in (select k.i_id from zbk k where k.use_dept = #{dept})
+     	 ORDER BY itemid
+     </select>
+      <select id="find"  resultMap="base">
+     	select t.* from ZBKSCORE t where id=#{id} and xulieid='1' ORDER BY itemid
+     </select>
+    <select id="findtjym" resultMap="base" parameterType="zbkscore">
+     select sum(cast(t.scorep as  decimal(10,2))) AS scorep,t.id,d.xm,t.year,d.leixing,d.idcard,e.finlscore from ZBKSCORE t left join v_ryzbk d on t.id=d.recordno
+      left join FINLSCORE e 
+      on t.id = e.id 
+      <if test="param.dept!=null and param.dept!=''">
+      and e.dept =#{param.dept}
+      </if>
+      where 1=1
+      <if test="param.item!=null and param.item!=''">
+    		 and d.xm like  CONCAT('%','${param.item}','%' )
+      </if>
+      <if test="param.id!=null and param.id!=''">
+    		and  d.pid=#{param.id}
+      </if>
+      <if test="param.dept==null or param.dept==''">
+       and t.xulieid is not null
+      </if>
+      <if test="param.dept!=null and param.dept!=''">
+    		and t.itemid in (select h.i_id from zbk h where h.use_dept=#{param.dept}
+                                            <!-- union all 
+                                           select m.i_id
+                                         from ZBK m
+                                        where  instr((select c.g_dept from choose_dept c where c.key_id=m.qzdept),#{param.dept}) > 0 -->
+                  )
+      </if>
+      group by t.id,d.xm,d.leixing,d.idcard
+       ORDER BY finlscore desc
+     </select>
+     
+      <select id="findtjfszf" resultMap="base" parameterType="zbkscore">
+     select sum( cast(scorep AS DECIMAL ( 10, 2 ) ) ) as scorep,t.id,d.xm,t.xulieid from ZBKSCORE t left join v_ryzbk d on t.id=d.recordno 
+      where 
+        t.id=#{param.id}
+        <if test="param.xulieid!=null and param.xulieid!=''">
+     	 and  t.xulieid=#{param.xulieid}
+        </if>
+        <if test="param.dept!=null and param.dept!=''">
+    		and t.itemid in (select h.i_id from zbk h where h.use_dept=#{param.dept}
+                                            union all 
+                                           select m.i_id
+                                         from ZBK m
+                                        where  instr((select c.g_dept from choose_dept c where c.key_id=m.qzdept),#{param.dept}) > 0
+                  )
+      </if>
+      group by t.id,d.xm,t.xulieid
+     </select>
+     
+     <select id="findyear"  resultMap="base">
+      	select t.* from ZBKSCORE t where date_format(year,'%Y')=#{year} ORDER BY itemid 
+     </select>
+     <select id="count"  resultMap="base">
+     	select count(*) from ZBKSCORE t where id=#{id} ORDER BY itemid
+     </select>
+     <delete id="delete">
+     	delete from ZBKSCORE where id=#{id} 
+     	 <if test="itemid!=null and itemid!=''">
+     		 and itemid=#{itemid}
+        </if>
+     	
+     </delete>
+       <delete id="delete_score">
+     	delete from ZBKSCORE where id=#{id}  and itemid in
+     	<foreach item="o" collection="clist" open="(" separator="," close=")" >
+     	#{o.itemid,jdbcType=VARCHAR}
+     	</foreach>
+     </delete>
+     <update id="updatetjbz" parameterType ="zbkscore">
+     	update ZBKSCORE set xulieid='1',year=sysdate() where id=#{id} 
+     	and itemid in (select h.i_id from zbk h where h.use_dept=#{dept}
+                                            union all 
+                                           select m.i_id
+                                         from ZBK m
+                                        where  instr((select c.g_dept from choose_dept c where c.key_id=m.qzdept),#{dept}) > 0
+                  )
+     	
+     </update>
+     
+     <select  id="findzbkrenyear"  resultMap="base" >
+        select distinct(date_format(year,'%Y'))as years from ZBKSCORE t where year is not null
+     </select>
+        <select  id="findnums"  resultMap="base" parameterType="zbkscore">
+       select s.* from zbkscore s where s.id in (select r.recordno from new_ryzbk r where r.pid = #{psunitid}) and s.itemid in (select z.i_id from zbk z where z.last='1' and z.use_dept=#{dept})
+		and s.xulieid='1'
+<!-- and date_format(s.year,'%Y') = date_format(SYSDATE(),'%Y')  -->
+     </select>
+     
+     		<update id="updatescrys" >
+ 		update zbkscore set state=#{state}
+ 		 where id in (
+ 		<foreach collection="slist" item="s" open="" separator="," >
+ 		 #{s}
+ 		</foreach>
+ 		)
+ 	</update>
+ 	
+ 	 <delete id="delete_scores">
+     	delete from ZBKSCORES where id=#{id}
+     </delete>
+      <delete id="delete_scoress">
+     	delete from ZBKSCORESS where id=#{id}
+     </delete>
+      <insert id="insert_scoress" parameterType ="java.util.List">
+     	insert into ZBKscoress (id,scorep,itemid,name,state) 
+	  values 
+	  <foreach item="o" collection="list" open="" separator="," close="" >
+	  (
+	  #{o.id,jdbcType=VARCHAR},
+	  #{o.scorep,jdbcType=VARCHAR},	  
+	  #{o.itemid,jdbcType=VARCHAR},
+	  #{o.name,jdbcType=VARCHAR},
+	  #{o.state,jdbcType=VARCHAR}
+	  )
+	  </foreach>
+     </insert>
+       <select  id="findsbyitemid"  resultMap="base" >
+        select * from ZBKSCORESS where itemid=#{itemid} and id=#{id}
+     </select>
+      <delete id="deleteitemid">
+     	delete from ZBKSCORESS where itemid=#{itemid} and id=#{id}
+     </delete>
+       <select  id="findsbyitemids"  resultMap="base" >
+       select sum( cast( t.scorep AS DECIMAL ( 10, 2 ) ) )  as scorep from zbkscoress t where itemid=#{itemid} and id=#{id}
+     </select>
+     
+     <select  id="findsumscore"  resultMap="base" >
+       select sum( cast( t.scorep AS DECIMAL ( 10, 2 ) ) ) as scorep from zbkscoress t where itemid=#{itemid} and id in (#{id})
+     </select>
+     
+     <update id="updatess" >
+ 		update zbkscoress set scorep=#{scorep}
+ 		 where id =#{id} and name=#{name} and itemid=#{itemid}
+ 	</update>
+ 	
+ 	  <select  id="findsbyname"  resultMap="base" >
+	SELECT
+	sum( cast( t.scorep AS DECIMAL ( 10, 2 ) ) ) AS scorep 
+	FROM
+	ZBKSCORESS t 
+	WHERE
+	id = #{id}
+	AND NAME = #{name}
+	     </select>
+	     
+	       <select  id="findsbynames"  resultMap="base" >
+	SELECT
+	t.* ,
+	z.item
+FROM
+	zbkscoress t 
+	left join zbk z
+	on t.itemid = z.i_id
+WHERE
+	t.name =#{name}
+	AND t.id = #{id}
+	order by cast(z.xuhao as unsigned int)
+	     </select>
+	     
+	        <select  id="findnumstj"  resultMap="base" parameterType="zbkscore">
+      <!--  select distinct s.id,p.xm 	from zbkscore s left join zc_personalrecord p on s.id=p.recordno where s.id in (select r.recordno from new_ryzbk r where r.pid = #{psunitid}) and s.itemid in (select z.i_id from zbk z where z.last='1' and z.use_dept=#{dept})
+		and s.xulieid='1' -->
+		
+	SELECT
+	p.xm 
+FROM
+	new_ryzbk n
+	LEFT JOIN zc_personalrecord p ON n.recordno = p.recordno 
+WHERE
+	1 = 1 
+	AND n.pid = 'af82e067-c405-4746-b0ca-99bf6d135d01' 
+	AND n.recordno NOT IN (
+	SELECT DISTINCT
+		s.id 
+	FROM
+		zbkscore s 
+	WHERE
+		s.id IN ( SELECT r.recordno FROM new_ryzbk r WHERE r.pid = #{psunitid}) 
+		AND s.itemid IN ( SELECT z.i_id FROM zbk z WHERE z.last = '1' AND z.use_dept = #{dept} ) 
+	AND s.xulieid = '1' 
+	)
+     </select>
+</mapper>

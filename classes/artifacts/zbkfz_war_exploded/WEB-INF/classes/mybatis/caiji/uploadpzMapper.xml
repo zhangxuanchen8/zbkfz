@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.caiji.Upload_pzDao">
+ 	<resultMap id="base" type="Upload_pz" ></resultMap>
+ 	<select id="findByPage"  resultMap="base" parameterType="Upload_pz">
+ 		select * from upload_pz
+ 		where 1=1
+ 		<if test="param.caijimc!=null and param.caijimc!=''">
+ 			and caijimc like concat('%',#{param.caijimc},'%')
+ 		</if>
+ 		order by caijimc desc
+ 	</select>
+ 	<insert id="insert">
+ 		insert into upload_pz (
+ 			id,caijimc,sccjsj,zhouqi,zhouqiday,zhouqixs,mx_sql,zxren,caijibz,date_sources
+ 		)
+ 		values(
+			#{id,jdbcType=VARCHAR},
+			#{caijimc,jdbcType=VARCHAR},
+			#{sccjsj,jdbcType=DATE},
+			#{zhouqi,jdbcType=VARCHAR},
+			#{zhouqiday,jdbcType=VARCHAR},
+			#{zhouqixs,jdbcType=VARCHAR},
+			#{mx_sql,jdbcType=VARCHAR},
+			#{zxren,jdbcType=VARCHAR},
+			#{caijibz,jdbcType=VARCHAR},
+			#{date_sources,jdbcType=VARCHAR}
+ 		)
+ 	</insert>
+ 	<update id="update" parameterType="Upload_pz">
+ 		update upload_pz set
+ 			caijimc=#{caijimc,jdbcType=VARCHAR},
+ 			zhouqi=#{zhouqi,jdbcType=VARCHAR},
+ 			zhouqiday=#{zhouqiday,jdbcType=VARCHAR},
+ 			zhouqixs=#{zhouqixs,jdbcType=VARCHAR},
+ 			mx_sql=#{mx_sql,jdbcType=VARCHAR},
+ 			zxren=#{zxren,jdbcType=VARCHAR},
+ 			date_sources=#{date_sources,jdbcType=VARCHAR},
+ 			cjsj=#{cjsj,jdbcType=DATE},
+ 			caijibz=#{caijibz,jdbcType=VARCHAR},
+ 			sccjsj=#{sccjsj,jdbcType=DATE}
+ 		where id = #{id}
+ 	</update>
+ 	
+ 	<update id="updatesdsj" parameterType="Upload_pz">
+ 		update upload_pz set
+ 			ccdate=#{ccdate,jdbcType=DATE}
+ 		where id = #{id}
+ 	</update>
+ 	
+ 	<select id="findById" resultMap="base" parameterType="Upload_pz">
+ 		select * from upload_pz
+ 		where id=#{id}
+ 	</select>
+ 	
+ 	<delete id="deletelist" parameterType="java.lang.String">
+ 		delete from upload_pz where id in (
+ 		<foreach item="o" collection="list" open="" separator="," close="" >
+				#{o}
+		</foreach>
+ 		)
+ 	</delete>
+ 	
+ 	<update id="updatetime" parameterType="String">
+ 		update upload_pz set
+ 			sccjsj=now()
+ 		where caijimc = #{caijimc}
+ 	</update>
+</mapper>

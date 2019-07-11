@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ehinfo.hr.repository.file.BaseFileDao">
+	<resultMap id="base" type="BaseFile"></resultMap>
+
+
+
+	 <insert id="insert"  parameterType="BaseFile">
+	insert into file_io (id,filename, files,filetype)
+		values(
+			#{id,jdbcType=VARCHAR},
+			#{filename,jdbcType=VARCHAR},
+			#{files,jdbcType=BLOB},
+			#{filetype,jdbcType=VARCHAR}
+		)
+	</insert> 
+	<select id="findById" resultMap="base" parameterType="BaseFile">
+		select t.* from file_io t
+		where 1=1
+		<if test="id != null ">
+			AND t.id=#{id}
+		</if>
+	</select>
+	<select id="getById" resultMap="base" parameterType="BaseFile">
+		select t.id,t.filename from file_io t
+		where 1=1
+		<if test="id != null ">
+			AND t.id=#{id}
+		</if>
+	</select>
+
+	<!-- <select id="findByPage" resultMap="base" parameterType="BaseContactInfo">
+		select t.* , a.c_name
+		from HR_CONTACT_INFO t
+		left join hr_employee a
+		on a.p_id = t.p_id
+		where 1=1
+		and effective_flag='Y'
+		<if test="param.p_id != null ">
+			AND t.p_id=#{param.p_id}
+		</if>
+	</select>
+
+	<select id="findbyid" resultMap="base" parameterType="BaseContactInfo">
+		select t.* from hr_contact_info t
+		where 1=1
+		<if test="id != null ">
+			AND t.id=#{id}
+		</if>
+	</select>
+
+	<update id="updateContactInfo"  parameterType="BaseContactInfo">
+		update hr_contact_info t set EFFECTIVE_FLAG = 'N'
+		where 1=1
+		AND t.id=#{id}
+	</update>
+
+	<update id="delContactInfo"  parameterType="BaseContactInfo">
+		update hr_contact_info t set EFFECTIVE_FLAG = 'N'
+		where 1=1
+		AND t.id=#{id}
+	</update>
+	
+	<update id="changeFlag" parameterType="BaseContactInfo">
+		update hr_contact_info t set EFFECTIVE_FLAG = 'N' 
+		WHERE 1=1 
+		AND p_id = #{p_id} and EFFECTIVE_FLAG = 'y'
+	</update>
+	
+	<insert id="insertContactInfo"  parameterType="BaseContactInfo">
+	insert into hr_contact_info (
+	id,p_id,mobile_tel,virtual_cornet,mobile_tel2,virtual_cornet2,office_tel,weixin,qq,home_address,mailing_address,urgent_linkman,linkman_tel,operator,operation_time,change_reasons,audit_result,audit_person,audit_time,audit_reasons,executor,effective_flag,picurl
+	)
+	values(
+	#{id,jdbcType=VARCHAR},
+	#{p_id,jdbcType=VARCHAR},
+	#{mobile_tel,jdbcType=VARCHAR},
+	#{virtual_cornet,jdbcType=VARCHAR},
+	#{mobile_tel2,jdbcType=VARCHAR},
+	#{virtual_cornet2,jdbcType=VARCHAR},
+	#{office_tel,jdbcType=VARCHAR},
+	#{weixin,jdbcType=VARCHAR},
+	#{qq,jdbcType=VARCHAR},
+	#{home_address,jdbcType=VARCHAR},
+	#{mailing_address,jdbcType=VARCHAR},
+	#{urgent_linkman,jdbcType=VARCHAR},
+	#{linkman_tel,jdbcType=VARCHAR},
+	#{operator,jdbcType=VARCHAR},
+	#{operation_time,jdbcType=DATE},
+	#{change_reasons,jdbcType=VARCHAR},
+	#{audit_result,jdbcType=VARCHAR},
+	#{audit_person,jdbcType=VARCHAR},
+	sysdate,
+	#{audit_reasons,jdbcType=VARCHAR},
+	#{executor,jdbcType=VARCHAR},
+	'Y',
+	#{picurl,jdbcType=VARCHAR}
+	)
+	</insert>
+
+	<update id="updateEmpInfo" parameterType="BaseContactInfo">
+		update hr_employee set home_address = #{home_address,jdbcType=VARCHAR}, mobile_tel = #{mobile_tel,jdbcType=VARCHAR}, office_tel = #{office_tel,jdbcType=VARCHAR} 
+		where p_id = #{p_id} 
+	</update> -->
+	
+</mapper>
